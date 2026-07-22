@@ -4931,6 +4931,37 @@ export default function EditorScreen1({
               .animate-bounce-down {
                 animation: bounce-down 1.2s infinite ease-in-out;
               }
+              
+              /* Premium range input styling */
+              input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+                background: #ffffff;
+                border: 2px solid #c05520;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+                cursor: pointer;
+                transition: transform 0.1s ease;
+              }
+              input[type="range"]::-webkit-slider-thumb:hover {
+                transform: scale(1.2);
+              }
+              input[type="range"]::-moz-range-thumb {
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+                background: #ffffff;
+                border: 2px solid #c05520;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+                cursor: pointer;
+                transition: transform 0.1s ease;
+              }
+              input[type="range"]::-moz-range-thumb:hover {
+                transform: scale(1.2);
+              }
+
                 
                 /* Auto-aligning right side panels using viewport units */
                 .editor-right-tools {
