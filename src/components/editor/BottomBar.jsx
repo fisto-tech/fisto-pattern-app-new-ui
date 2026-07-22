@@ -171,57 +171,6 @@ export default function BottomBar({
           );
         })}
       </div>
-
-      <div className="w-[1px] h-6 bg-gray-200/80 mx-1 shrink-0" />
-
-      {/* Quick View Controls */}
-      <div className="flex items-center gap-1 shrink-0">
-        <button
-          onClick={onResetView}
-          className="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 cursor-pointer transition-colors border-none"
-          title="Reset Camera View"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.8}
-            stroke="currentColor"
-            className="w-4 h-4"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-            />
-          </svg>
-        </button>
-
-        <button
-          onClick={onToggleWireframe}
-          className={`p-2 rounded-xl cursor-pointer transition-colors border-none ${
-            wireframe
-              ? "bg-[#C15F27]/10 text-[#C15F27]"
-              : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-          }`}
-          title="Toggle Wireframe"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.8}
-            stroke="currentColor"
-            className="w-4 h-4"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"
-            />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }

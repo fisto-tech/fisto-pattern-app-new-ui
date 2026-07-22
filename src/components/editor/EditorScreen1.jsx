@@ -1,4 +1,4 @@
-﻿import {
+import {
   useRef,
   useState,
   useMemo,
@@ -4467,12 +4467,14 @@ export default function EditorScreen1({
       {/* Popups Bottom Drawer Container (Centered above bottom navigation bar) */}
       <div className="editor-popups-container fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex pointer-events-none max-w-[95vw]">
         <div
-          className={`transition-all duration-300 overflow-hidden shrink-0 pointer-events-auto bg-white rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.12)] border border-gray-150 flex flex-col ${
+          className={`transition-all duration-300 ease-out overflow-hidden shrink-0 pointer-events-auto bg-white rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.12)] border border-gray-150 flex flex-col ${
             activeTab && activeTab !== "uv_editor"
               ? isScaledUp
-                ? "w-[640px] h-[400px] p-5 opacity-100 translate-y-0"
-                : "w-[380px] h-[330px] p-5 opacity-100 translate-y-0"
-              : "w-0 h-0 p-0 opacity-0 translate-y-4 pointer-events-none border-none shadow-none"
+                ? "w-[640px] h-[400px] p-5 opacity-100 translate-y-0 scale-100"
+                : activeTab === "edit"
+                  ? "w-[380px] h-[370px] p-5 opacity-100 translate-y-0 scale-100"
+                  : "w-[380px] h-[340px] p-5 opacity-100 translate-y-0 scale-100"
+              : "w-[380px] h-[340px] p-0 opacity-0 translate-y-8 scale-95 pointer-events-none border-none shadow-none"
           }`}
         >
           <div className="flex-1 overflow-y-auto flex flex-col gap-4 min-h-0">
@@ -4579,7 +4581,7 @@ export default function EditorScreen1({
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4">
+                <div className="flex-1 overflow-y-auto pr-1 pb-6 flex flex-col gap-4">
                   {/* Size block */}
                   <div className="w-full flex items-center justify-between p-3 rounded-2xl border border-gray-100 bg-gray-50/70">
                     <div className="flex items-center gap-3">
@@ -4751,7 +4753,7 @@ export default function EditorScreen1({
                       )}
                     </div>
 
-                    <div className="grid grid-cols-4 gap-1.5 max-h-[140px] overflow-y-auto pr-0.5">
+                    <div className="grid grid-cols-4 gap-3 max-h-[160px] overflow-y-auto pr-1">
                       {textureLibrary
                         .find((c) => c.category === activeTextureCategory)
                         ?.textures.map((texture) => (
@@ -4921,24 +4923,19 @@ export default function EditorScreen1({
         {!showTools && (
           <>
             <div className="w-6 h-px bg-gray-200 mx-auto" />
-            <button
-              onClick={() => setShowTools(true)}
-              className=" rounded-full flex flex-col items-center justify-center border-none bg-transparent hover:bg-orange-50 text-[#c05520] cursor-pointer transition-colors relative"
-              title="More Tools"
-            >
-              <style>{`
-                @keyframes bounce-down {
-                  0%, 100% { transform: translateY(0); }
-                  50% { transform: translateY(3px); }
-                }
-                .animate-bounce-down {
-                  animation: bounce-down 1.2s infinite ease-in-out;
-                }
+            <style>{`
+              @keyframes bounce-down {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(3px); }
+              }
+              .animate-bounce-down {
+                animation: bounce-down 1.2s infinite ease-in-out;
+              }
                 
                 /* Auto-aligning right side panels using viewport units */
                 .editor-right-tools {
                   width: 5.6vh !important;
-                  top: 2vh !important;
+                  top: 8vh !important;
                   right: 1.5vw !important;
                   padding: 0.9vh !important;
                   gap: 0.7vw !important;
@@ -4995,7 +4992,7 @@ export default function EditorScreen1({
                 }
                 
                 .editor-right-actions {
-                  top: 2vh !important;
+                  top: 8vh !important;
                   right: 4.5vw !important;
                   padding: 0.55vh !important;
                   gap: 0.7vh !important;
@@ -5098,6 +5095,11 @@ export default function EditorScreen1({
                   font-size: 0.8vw !important;
                 }
               `}</style>
+            <button
+              onClick={() => setShowTools(true)}
+              className="w-full rounded-full flex items-center justify-center border-none bg-transparent hover:bg-orange-50 text-[#c05520] cursor-pointer transition-colors p-1"
+              title="More Tools"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -5106,15 +5108,8 @@ export default function EditorScreen1({
                 stroke="currentColor"
                 className="w-4 h-4 animate-bounce-down"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
               </svg>
-              <span className="text-[9px] font-bold tracking-wider uppercase mt-0.5 select-none leading-none">
-                More
-              </span>
             </button>
           </>
         )}
