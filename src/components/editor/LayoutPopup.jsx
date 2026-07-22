@@ -51,6 +51,9 @@ export default function LayoutPopup({
   updateCapUniformScale,
   onSaveCapConfig,
   isLayoutSelected = false,
+  isScaledUp = false,
+  onToggleScale,
+  onClose,
 }) {
   const [isSaved, setIsSaved] = useState(false);
   const [isCopied, setIsCopied] = useState(false);

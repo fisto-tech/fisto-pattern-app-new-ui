@@ -1,4 +1,4 @@
-import {
+﻿import {
   useRef,
   useState,
   useMemo,
@@ -1477,7 +1477,7 @@ function AutoSizedModelWithDimensions({
     }
   }, [clonedScene, selectedCapUrl, modelUrl]);
 
-  // Cap hover raycasting — detect when mouse is over a cap/lid mesh
+  // Cap hover raycasting â€” detect when mouse is over a cap/lid mesh
   const capRaycaster = useMemo(() => new THREE.Raycaster(), []);
   const capHoverRef = useRef(false);
   useEffect(() => {
@@ -1550,10 +1550,10 @@ function AutoSizedModelWithDimensions({
     };
   }, [clonedScene, gl, camera, onCapHover, onCapLeave, capRaycaster]);
 
-  // ── Color Brush Raycaster ──────────────────────────────────────────────────
+  // â”€â”€ Color Brush Raycaster â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Collects all non-decal, non-measurement meshes for brush picking
   const brushRaycaster = useMemo(() => new THREE.Raycaster(), []);
-  // Map: materialId → original color (THREE.Color) for restoring previews
+  // Map: materialId â†’ original color (THREE.Color) for restoring previews
   const brushPreviewRef = useRef(null); // { meshes, materialId, origColors }
 
   useEffect(() => {
@@ -2725,7 +2725,7 @@ function AutoSizedModelWithDimensions({
   );
 }
 
-// ─── Screen-space measurement overlay helpers ──────────────────────────────
+// â”€â”€â”€ Screen-space measurement overlay helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function _setMLine(svg, id, x1, y1, x2, y2) {
   const el = svg.querySelector(`[data-m="${id}"]`);
   if (!el) return;
@@ -2813,7 +2813,7 @@ function MeasurementTracker({
     const wLabel = baseDimensions?.width ? `${baseDimensions.width} mm` : "";
     const hLabel = baseDimensions?.height ? `${baseDimensions.height} mm` : "";
 
-    // ── Top Length (horizontal line above top face) ──
+    // â”€â”€ Top Length (horizontal line above top face) â”€â”€
     const tlOffset = 28;
     const tlY = Math.min(tfl.y, tfr.y, tbl.y) - tlOffset;
     _setMLine(overlay, "tl-el", tfl.x, tfl.y, tfl.x, tlY);
@@ -2827,7 +2827,7 @@ function MeasurementTracker({
       lenLabel ? `Top Length - ${lenLabel}` : "Top Length",
     );
 
-    // ── Top Breadth (oblique line on left side of top face) ──
+    // â”€â”€ Top Breadth (oblique line on left side of top face) â”€â”€
     _setMLine(overlay, "tb", tfl.x, tfl.y, tbl.x, tbl.y);
     const tbMx = (tfl.x + tbl.x) / 2;
     const tbMy = (tfl.y + tbl.y) / 2;
@@ -2839,7 +2839,7 @@ function MeasurementTracker({
       wLabel ? `Top Breadth - ${wLabel}` : "Top Breadth",
     );
 
-    // ── Height (vertical line on the left) ──
+    // â”€â”€ Height (vertical line on the left) â”€â”€
     const hOffset = -32;
     const hX = Math.min(bfl.x, tfl.x) + hOffset;
     _setMLine(overlay, "h-eb", bfl.x, bfl.y, hX + 12, bfl.y);
@@ -2856,7 +2856,7 @@ function MeasurementTracker({
       hLabel ? `H - ${hLabel}` : "H",
     );
 
-    // ── Base Length (horizontal line below bottom face) ──
+    // â”€â”€ Base Length (horizontal line below bottom face) â”€â”€
     const blOffset = 28;
     const blY = Math.max(bfl.y, bfr.y) + blOffset;
     _setMLine(overlay, "bl-el", bfl.x, bfl.y, bfl.x, blY);
@@ -2870,7 +2870,7 @@ function MeasurementTracker({
       lenLabel ? `Base Length - ${lenLabel}` : "Base Length",
     );
 
-    // ── Base Breadth (oblique line on right side of bottom face) ──
+    // â”€â”€ Base Breadth (oblique line on right side of bottom face) â”€â”€
     _setMLine(overlay, "bb", bfr.x, bfr.y, bbr.x, bbr.y);
     const bbMx = (bfr.x + bbr.x) / 2;
     const bbMy = (bfr.y + bbr.y) / 2;
@@ -3108,7 +3108,7 @@ export default function EditorScreen1({
   };
 
   // Cap hover color panel state
-  const [capHoverPos, setCapHoverPos] = useState(null); // { x, y } — locked once panel is shown
+  const [capHoverPos, setCapHoverPos] = useState(null); // { x, y } â€” locked once panel is shown
   const [capHoverMaterialKey, setCapHoverMaterialKey] = useState(null);
   const capHideTimerRef = useRef(null); // debounce timer to keep panel alive
   const isOverPanelRef = useRef(false); // true while cursor is inside the color panel
@@ -4000,7 +4000,7 @@ export default function EditorScreen1({
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{ zIndex: 3 }}
           >
-            {/* ── Top Length ── */}
+            {/* â”€â”€ Top Length â”€â”€ */}
             <line
               data-m="tl-el"
               stroke="#b84c00"
@@ -4029,7 +4029,7 @@ export default function EditorScreen1({
               dominantBaseline="auto"
             />
 
-            {/* ── Top Breadth ── */}
+            {/* â”€â”€ Top Breadth â”€â”€ */}
             <line
               data-m="tb"
               stroke="#b84c00"
@@ -4046,7 +4046,7 @@ export default function EditorScreen1({
               dominantBaseline="auto"
             />
 
-            {/* ── Height ── */}
+            {/* â”€â”€ Height â”€â”€ */}
             <line
               data-m="h-eb"
               stroke="#b84c00"
@@ -4077,7 +4077,7 @@ export default function EditorScreen1({
               dominantBaseline="middle"
             />
 
-            {/* ── Base Length ── */}
+            {/* â”€â”€ Base Length â”€â”€ */}
             <line
               data-m="bl-el"
               stroke="#b84c00"
@@ -4106,7 +4106,7 @@ export default function EditorScreen1({
               dominantBaseline="hanging"
             />
 
-            {/* ── Base Breadth ── */}
+            {/* â”€â”€ Base Breadth â”€â”€ */}
             <line
               data-m="bb"
               stroke="#b84c00"
@@ -4169,7 +4169,7 @@ export default function EditorScreen1({
           className="fixed z-50 pointer-events-auto"
           style={{ left: capHoverPos.x + 16, top: capHoverPos.y - 16 }}
           onMouseDown={() => {
-            // Keep panel alive during click — cancel any pending hide
+            // Keep panel alive during click â€” cancel any pending hide
             if (capHideTimerRef.current) {
               clearTimeout(capHideTimerRef.current);
               capHideTimerRef.current = null;
@@ -4267,7 +4267,7 @@ export default function EditorScreen1({
                   />
                 );
               })}
-              {/* Custom color picker — label wraps a zero-size input so the native picker opens reliably */}
+              {/* Custom color picker â€” label wraps a zero-size input so the native picker opens reliably */}
               <label
                 className="w-7 h-7 rounded-full border-2 border-dashed border-gray-300 hover:border-[#c05520] transition-colors flex-shrink-0 cursor-pointer flex items-center justify-center relative"
                 title="Custom color"
@@ -4423,7 +4423,7 @@ export default function EditorScreen1({
         </div>
 
         <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Show Default Labels toggle — compact for top bar */}
+          {/* Show Default Labels toggle â€” compact for top bar */}
           {!(
             (appliedTextures && Object.keys(appliedTextures).length > 0) ||
             (appliedColors && Object.keys(appliedColors).length > 0) ||
@@ -4784,503 +4784,14 @@ export default function EditorScreen1({
           </div>
         </div>
 
-            <button
-              onClick={() => onProceed(selectedMaterial)}
-              className="w-full flex items-center justify-between p-3.5 rounded-xl border-2 border-[#c05520] bg-transparent hover:bg-orange-50 transition-all duration-300 cursor-pointer group shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center border border-orange-200">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-4 h-4 text-[#c05520]"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-                    />
-                  </svg>
-                </div>
-                <span className="font-bold text-[#c05520] text-[15px] tracking-wide">
-                  Custom Features
-                </span>
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.5}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw] text-[#c05520] animate-bounce-right-loop"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                />
-              </svg>
-            </button>
 
-            {/* ── Color Brush / Pick & Paint ──────────────────────────── */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-gray-700">
-                  Pick &amp; Paint
-                </label>
-              </div>
-              <div className="flex items-center gap-2 justify-around pr-[1vw]">
-                {/* 1. Remove / Reset swatch */}
-                <button
-                  onClick={() => {
-                    if (onApplyColor) {
-                      // Apply null (remove color) to all materials
-                      onApplyColor("all", null);
-                    }
-                    setBrushColor("__none__");
-                    setColorBrushActive(false);
-                  }}
-                  title="Remove all applied colors"
-                  style={{
-                    position: "relative",
-                    flexShrink: 0,
-                    width: "1.8vw",
-                    height: "1.8vw",
-                    padding: 0,
-                    borderRadius: "8px",
-                    border: "2px solid #fca5a5",
-                    backgroundColor: "#fef2f2",
-                    cursor: "pointer",
-                    overflow: "hidden",
-                    transition: "transform 0.15s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.1)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 100 100"
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      width: "80%",
-                      height: "80%",
-                      display: "block",
-                    }}
-                  >
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      fill="none"
-                      stroke="#ef4444"
-                      strokeWidth="10"
-                    />
-                    <line
-                      x1="15"
-                      y1="15"
-                      x2="85"
-                      y2="85"
-                      stroke="#ef4444"
-                      strokeWidth="10"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-
-                {/* 2. Transparent swatch */}
-                <button
-                  onClick={() => {
-                    setBrushColor("transparent");
-                    setColorBrushActive(true);
-                  }}
-                  className={`flex-shrink-0 rounded-lg border-2 transition-all hover:scale-110 cursor-pointer ${colorBrushActive && brushColor === "transparent"
-                    ? "border-[#c05520] shadow-md scale-110"
-                    : "border-gray-200 hover:border-[#c05520]"
-                    }`}
-                  style={{
-                    width: "1.8vw",
-                    height: "1.8vw",
-                    background:
-                      "conic-gradient(#cbd5e1 25%, white 0 50%, #cbd5e1 0 75%, white 0)",
-                    backgroundSize: "8px 8px",
-                  }}
-                  title="Paint transparent on specific materials"
-                />
-
-                {/* 3. Custom color picker swatch */}
-                <div
-                  className={`relative flex-shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all border-2 ${flashColorPicker
-                    ? "border-red-500 scale-125 shadow-lg animate-pulse"
-                    : colorBrushActive &&
-                      brushColor !== "transparent" &&
-                      brushColor !== "__none__"
-                      ? "border-[#c05520] shadow-md scale-110"
-                      : "border-gray-200 hover:border-gray-300 hover:scale-110"
-                    }`}
-                  style={{
-                    width: "1.8vw",
-                    height: "1.8vw",
-                    background:
-                      brushColor === "__none__" ? "#f3f4f6" : brushColor,
-                    transition: "all 0.2s ease-in-out",
-                  }}
-                  title="Pick custom brush color"
-                >
-                  <input
-                    type="color"
-                    value={brushColor === "__none__" ? "#3b82f6" : brushColor}
-                    onChange={(e) => {
-                      setBrushColor(e.target.value);
-                      setColorBrushActive(true);
-                    }}
-                    className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 opacity-0 cursor-pointer z-10"
-                  />
-                  {brushColor === "__none__" && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      className="absolute inset-0 m-auto w-[82%] h-[82%]"
-                      style={{ pointerEvents: "none" }}
-                    >
-                      <path
-                        d="M 12 12 L 12 0 A 12 12 0 0 1 20.485 3.515 Z"
-                        fill="#ff5722"
-                      />
-                      <path
-                        d="M 12 12 L 20.485 3.515 A 12 12 0 0 1 24 12 Z"
-                        fill="#ff1744"
-                      />
-                      <path
-                        d="M 12 12 L 24 12 A 12 12 0 0 1 20.485 20.485 Z"
-                        fill="#7c4dff"
-                      />
-                      <path
-                        d="M 12 12 L 20.485 20.485 A 12 12 0 0 1 12 24 Z"
-                        fill="#03a9f4"
-                      />
-                      <path
-                        d="M 12 12 L 12 24 A 12 12 0 0 1 3.515 20.485 Z"
-                        fill="#2979ff"
-                      />
-                      <path
-                        d="M 12 12 L 3.515 20.485 A 12 12 0 0 1 0 12 Z"
-                        fill="#607d8b"
-                      />
-                      <path
-                        d="M 12 12 L 0 12 A 12 12 0 0 1 3.515 3.515 Z"
-                        fill="#00e676"
-                      />
-                      <path
-                        d="M 12 12 L 3.515 3.515 A 12 12 0 0 1 12 0 Z"
-                        fill="#ffeb3b"
-                      />
-                      <circle cx="12" cy="12" r="6" fill="#ffffff" />
-                    </svg>
-                  )}
-                </div>
-
-                {/* 4. Pick Color / Cancel button */}
-                <button
-                  onClick={() => {
-                    if (!colorBrushActive && brushColor === "__none__") {
-                      setPickerMessage("Please pick a brush color first!");
-                      setFlashColorPicker(true);
-                      setTimeout(() => {
-                        setPickerMessage("");
-                        setFlashColorPicker(false);
-                      }, 4000);
-                      return;
-                    }
-                    setColorBrushActive((v) => !v);
-                    setPickerMessage("");
-                  }}
-                  className={` flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold border transition-all ${colorBrushActive
-                    ? isLightColor(brushColor)
-                      ? "text-gray-800 border-gray-300 shadow-sm"
-                      : "text-white border-transparent shadow-md"
-                    : "text-gray-600 border-gray-200 hover:bg-gray-50"
-                    }`}
-                  style={{
-                    background:
-                      colorBrushActive && brushColor !== "__none__"
-                        ? brushColor === "transparent"
-                          ? "conic-gradient(#cbd5e1 25%, white 0 50%, #cbd5e1 0 75%, white 0)"
-                          : brushColor
-                        : colorBrushActive
-                          ? "#c05520"
-                          : "",
-                    backgroundSize:
-                      brushColor === "transparent" ? "8px 8px" : undefined,
-                    cursor: "pointer",
-                  }}
-                  title={
-                    colorBrushActive
-                      ? "Cancel brush mode"
-                      : "Activate brush to paint materials"
-                  }
-                >
-                  {colorBrushActive ? (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke={
-                          isLightColor(brushColor) ? "#1f2937" : "currentColor"
-                        }
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        className="w-3.5 h-3.5 flex-shrink-0"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                      Cancel
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4"
-                      >
-                        <path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z" />
-                        <path d="M9 8c-2 3-4 3.5-7 4l8 8c1-.5 3.5-2 4-7" />
-                        <path d="M14.5 17.5 4.5 15" />
-                      </svg>
-                      Pick Color
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {pickerMessage && (
-                <p className="text-[11px] text-red-500 pl-[0.3vw] pt-[0.3vw] font-bold leading-tight animate-pulse">
-                  {pickerMessage}
-                </p>
-              )}
-            </div>
-
-            {/* Metallic & Roughness Adjustments */}
-            {(
-              <div className="flex flex-col gap-3.5 pt-2 border-t border-gray-100 mt-1">
-                {/* Metallic Slider */}
-                <DebouncedSlider
-                  label="Metallic"
-                  value={
-                    appliedMetallic?.[
-                    selectedMaterial && selectedMaterial !== "none"
-                      ? selectedMaterial
-                      : "all"
-                    ] ?? 0.1
-                  }
-                  onChange={(val) => {
-                    if (onApplyMetallic) {
-                      onApplyMetallic(selectedMaterial, val);
-                    }
-                  }}
-                />
-
-                {/* Roughness Slider */}
-                <DebouncedSlider
-                  label="Roughness"
-                  value={
-                    appliedRoughness?.[
-                    selectedMaterial && selectedMaterial !== "none"
-                      ? selectedMaterial
-                      : "all"
-                    ] ?? 0.5
-                  }
-                  onChange={(val) => {
-                    if (onApplyRoughness) {
-                      onApplyRoughness(selectedMaterial, val);
-                    }
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Texture Library */}
-            {true && (
-              <div className="flex flex-col gap-2 pt-2 border-t border-gray-100 mt-2">
-                <div className="flex items-center justify-between pb-1">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Texture Library
-                    </label>
-                    <div className="relative shrink-0">
-                      <button
-                        onClick={() =>
-                          setIsTextureDropdownOpen(!isTextureDropdownOpen)
-                        }
-                        className={`p-1 rounded-full border text-gray-500 hover:text-gray-900 bg-gray-50 border-gray-200 hover:bg-gray-100 cursor-pointer flex items-center justify-center transition-all ${isTextureDropdownOpen ? "bg-gray-100 border-gray-300" : ""}`}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                          className="w-3.5 h-3.5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                          />
-                        </svg>
-                      </button>
-
-                      {isTextureDropdownOpen && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setIsTextureDropdownOpen(false)}
-                          />
-                          <div className="absolute left-0 top-full mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto py-1.5 flex flex-col">
-                            {textureLibrary.map((category) => (
-                              <button
-                                key={category.category}
-                                onClick={() => {
-                                  setActiveTextureCategory(category.category);
-                                  setIsTextureDropdownOpen(false);
-                                }}
-                                className={`px-4 py-2 text-left text-xs font-semibold hover:bg-gray-50 transition-colors cursor-pointer ${activeTextureCategory === category.category ? "text-[#c05520] bg-orange-50/50" : "text-gray-700"}`}
-                              >
-                                {category.category}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {!!(
-                    appliedMaterials?.[
-                    isWearableModel || isTapeModel
-                      ? "all"
-                      : selectedMaterial && selectedMaterial !== "none"
-                        ? selectedMaterial
-                        : "all"
-                    ] || appliedMaterials?.["all"]
-                  ) && (
-                      <button
-                        onClick={() => {
-                          if (textureTimeoutRef.current)
-                            clearTimeout(textureTimeoutRef.current);
-                          if (textureFallbackTimeoutRef.current)
-                            clearTimeout(textureFallbackTimeoutRef.current);
-                          setIsModelLoading(false);
-                          if (onApplyMaterial)
-                            onApplyMaterial(
-                              isWearableModel || isTapeModel
-                                ? "all"
-                                : selectedMaterial,
-                              null,
-                            );
-                        }}
-                        className="text-[10px] text-gray-500 hover:text-red-600 transition-colors cursor-pointer flex items-center gap-1 font-semibold"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                          className="w-3 h-3"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                        Clear
-                      </button>
-                    )}
-                </div>
-
-                {/* Texture Grid */}
-                <div className="grid grid-cols-4 gap-2 mt-1 max-h-[200px] overflow-y-auto pr-1">
-                  {textureLibrary
-                    .find((c) => c.category === activeTextureCategory)
-                    ?.textures.map((texture) => (
-                      <button
-                        key={texture.id}
-                        title={texture.name}
-                        disabled={isModelLoading}
-                        onClick={() => {
-                          if (isModelLoading || !onApplyMaterial) return;
-
-                          if (textureTimeoutRef.current)
-                            clearTimeout(textureTimeoutRef.current);
-                          if (textureFallbackTimeoutRef.current)
-                            clearTimeout(textureFallbackTimeoutRef.current);
-
-                          // Force the loading spinner to appear before blocking the main thread
-                          setIsModelLoading(true);
-                          textureTimeoutRef.current = setTimeout(() => {
-                            onApplyMaterial(
-                              isWearableModel || isTapeModel
-                                ? "all"
-                                : selectedMaterial,
-                              texture,
-                            );
-                            // Fallback to hide spinner to cover the WebGL shader compilation block
-                            textureFallbackTimeoutRef.current = setTimeout(
-                              () => setIsModelLoading(false),
-                              1500,
-                            );
-                          }, 60);
-                        }}
-                        className={`relative rounded-xl border-2 overflow-hidden aspect-square flex flex-col items-center justify-center transition-all ${isModelLoading ? "opacity-40 cursor-not-allowed" : "cursor-pointer"} ${appliedMaterials?.[isWearableModel || isTapeModel ? "all" : selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"]?.id === texture.id ? "border-[#c05520] shadow-md" : "border-transparent hover:border-gray-200"}`}
-                      >
-                        {texture.preview ? (
-                          <img
-                            src={texture.preview}
-                            alt={texture.name}
-                            className="absolute inset-0 w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-[10px] text-gray-400 p-1 text-center font-medium leading-tight">
-                            {texture.name}
-                          </div>
-                        )}
-                        {appliedMaterials?.[
-                          isWearableModel || isTapeModel
-                            ? "all"
-                            : selectedMaterial && selectedMaterial !== "none"
-                              ? selectedMaterial
-                              : "all"
-                        ]?.id === texture.id && <TextureActiveOverlay />}
-                      </button>
-                    ))}
-                </div>
-              </div>
-            )}
         {activeTab === "scene" && (
           <HdriLoadingOverlay isModelLoading={isModelLoading} />
         )}
       </div>
 
 
-      {/* Right Floating Tools Pill — repositioned below top header */}
+      {/* Right Floating Tools Pill â€” repositioned below top header */}
       <div className="editor-right-tools absolute right-[1.5vw] top-24 z-10 bg-white rounded-full p-2 shadow-lg flex flex-col gap-[0.6vw]">
         <Tooltip1 label="Select" side="left">
           <button
@@ -6120,7 +5631,7 @@ export default function EditorScreen1({
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-[16px] leading-none mt-0.5">⚙️</span>
+                <span className="text-[16px] leading-none mt-0.5">âš™ï¸</span>
                 <div className="flex flex-col">
                   <span className="font-bold text-gray-700">Mouse Wheel</span>
                   <span className="text-gray-500">Zoom in / out</span>
