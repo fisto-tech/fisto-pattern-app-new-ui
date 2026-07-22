@@ -1,0 +1,51 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g clip-path="url(#clip0_2112_115)">
+<rect width="1920" height="1080" fill="#EEE2D3"/>
+<g filter="url(#filter0_f_2112_115)">
+<rect y="-2" width="1920" height="1082" fill="url(#pattern0_2112_115)"/>
+</g>
+<g filter="url(#filter1_f_2112_115)">
+<ellipse cx="236.5" cy="578" rx="563.5" ry="502" fill="url(#paint0_linear_2112_115)" fill-opacity="0.67"/>
+</g>
+<g filter="url(#filter2_d_2112_115)">
+<rect x="763" y="69" width="824" height="917" fill="url(#pattern1_2112_115)" shape-rendering="crispEdges"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_2112_115" x="-8.2" y="-10.2" width="1936.4" height="1098.4" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="4.1" result="effect1_foregroundBlur_2112_115"/>
+</filter>
+<pattern id="pattern0_2112_115" patternContentUnits="objectBoundingBox" width="1" height="1">
+<use xlink:href="#image0_2112_115" transform="matrix(0.000598875 0 0 0.0010627 -0.000659759 0)"/>
+</pattern>
+<filter id="filter1_f_2112_115" x="-573.8" y="-170.8" width="1620.6" height="1497.6" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="123.4" result="effect1_foregroundBlur_2112_115"/>
+</filter>
+<filter id="filter2_d_2112_115" x="748.5" y="58.5" width="853" height="946" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="7.25"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2112_115"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2112_115" result="shape"/>
+</filter>
+<pattern id="pattern1_2112_115" patternContentUnits="objectBoundingBox" width="1" height="1">
+<use xlink:href="#image1_2112_115" transform="matrix(0.00117287 0 0 0.00105392 0.099057 -0.000121725)"/>
+</pattern>
+<linearGradient id="paint0_linear_2112_115" x1="236.5" y1="76" x2="236.5" y2="1080" gradientUnits="userSpaceOnUse">
+<stop offset="0.293287" stop-color="white"/>
+<stop offset="1" stop-color="#F9F4F0"/>
+</linearGradient>
+<clipPath id="clip0_2112_115">
+<rect width="1920" height="1080" fill="white"/>
+</clipPath>
+<image id="image0_2112_115" width="1672" height="941" preserveAspectRatio="none" xlink:href="/Hero/banner5/background.webp"/>
+<image id="image1_2112_115" width="1536" height="1024" preserveAspectRatio="none" xlink:href="/Hero/banner5/product.webp"/>
+</defs>
+</svg>

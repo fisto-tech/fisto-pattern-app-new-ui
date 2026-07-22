@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/webp" href="./src/assets/images/fisto-logo.webp" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fist-O Pattern APP</title>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Instant preloader shown before JS bundle is parsed -->
+      <style>
+        .initial-preloader {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #EEE2D3;
+          margin: 0;
+          padding: 0;
+        }
+        .initial-preloader-logo {
+          width: 192px;
+          height: auto;
+          animation: initial-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.15));
+        }
+        @keyframes initial-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .5; }
+        }
+      </style>
+      <div class="initial-preloader">
+        <img class="initial-preloader-logo" src="./src/assets/images/fisto-logo.webp" alt="Loading..." />
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

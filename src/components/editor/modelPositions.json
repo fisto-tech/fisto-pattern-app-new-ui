@@ -1,0 +1,162 @@
+{
+  "/src/assets/models/Food%20Containers/Oval/oval%20.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.07791232169537127,
+    "polar": 1.4014370872440316,
+    "distance": 7.678367090816275
+  },
+  "/src/assets/models/Food%20Packaging/zip%20lock%20Pouches%20bag/Zip%20lock%20Pouches.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.0012199636737671386,
+    "polar": 1.302374057212772,
+    "distance": 6.945921274996441
+  },
+  "/src/assets/models/Food%20Packaging/Kraft%20Paper/Craft%20paper.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.019731385483894297,
+    "polar": 1.3467932923938688,
+    "distance": 7.369665147666354
+  },
+  "/src/assets/models/Food%20Containers/Round/Round.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.22497861141431455,
+    "polar": 1.3581380208397633,
+    "distance": 7.678367090816257
+  },
+  "/src/assets/models/Food%20Containers/Tamper%20Evident/TE%20.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.13048120438675775,
+    "polar": 1.43393553067595,
+    "distance": 7.2368733537672485
+  },
+  "/src/assets/models/Drinkware%20Bottles/Plastic%20water%20bottles/Plastic%20Water%20bottle.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.1723360157370898,
+    "polar": 1.1508087630453971,
+    "distance": 5.657496290492399
+  },
+  "/src/assets/models/Drinkware%20Bottles/Glass%20Bottle/glass_Bottle.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.05248668519534759,
+    "polar": 1.3423253080489006,
+    "distance": 6.254077985264155
+  },
+  "/src/assets/models/Drinkware%20Bottles/Soft%20drinks/Soft%20drinks%20bottle.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.1207225499271406,
+    "polar": 1.4027640323419168,
+    "distance": 7.999999999999967
+  },
+  "/src/assets/models/Drinkware%20Bottles/Steel%20Bottle/Steel%20bottle.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.000997964630139715,
+    "polar": 1.4534731792281537,
+    "distance": 6.141387623055316
+  },
+  "/src/assets/models/Carton%20box/Folding/Folding.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": 0.8104111560752458,
+    "polar": 1.490371655804309,
+    "distance": 6.945921274996416
+  },
+  "/src/assets/models/Carton%20box/Die%20cut/Die%20cut.glb": {
+    "target": [
+      -0.20085071765129084,
+      1.1341530570708345,
+      -0.08260149060603508
+    ],
+    "azimuth": -0.3288558283540983,
+    "polar": 1.3504104896687752,
+    "distance": 6.666666666667077
+  },
+  "/src/assets/models/Eco%20friendly/Paper%20Bags/Paper%20Bag-1.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.06778735648882513,
+    "polar": 1.5609838320423381,
+    "distance": 6.66666666666675
+  },
+  "/src/assets/models/Packaging%20tapes/Box%20sealing%20Tape/Box_Tape.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": 0.25116599578393584,
+    "polar": 1.5014069879837506,
+    "distance": 5.894478577101901
+  },
+  "/src/assets/models/Fashion%20Wear/T-shirt/t%20s1.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": 0.018010172591360275,
+    "polar": 1.3870526306902207,
+    "distance": 6.945921274996396
+  },
+  "/src/assets/models/Carton%20box/Beverage/Beverage%20Cup.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": 0.00708752108415767,
+    "polar": 1.4996395560397933,
+    "distance": 6.666666666666682
+  },
+  "/src/assets/models/Fashion%20Wear/hoodie/Hoodie2.glb": {
+    "target": [
+      0,
+      1.1333333333333335,
+      0
+    ],
+    "azimuth": -0.022704161357468597,
+    "polar": 1.4151138446123321,
+    "distance": 6.39863924234693
+  }
+}
