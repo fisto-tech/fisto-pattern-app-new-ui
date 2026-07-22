@@ -289,3 +289,14 @@ export const BOTTLE_CAP_CONFIGS = {
     "Cap8.glb": { posX: 0, posY: 0.38, posZ: 0, scaleX: 42, scaleY: 42, scaleZ: 42 },
   }
 };
+export function getCleanCapFileName(url) {
+  if (!url || url === "none") return "default";
+  const cleanUrl = url.split("?")[0].split("#")[0];
+  const filename = cleanUrl.split("/").pop() || "";
+  const match = filename.match(/(Cap\d+)/i);
+  if (match) {
+    const capName = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+    return `${capName}.glb`;
+  }
+  return filename;
+}

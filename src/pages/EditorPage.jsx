@@ -635,9 +635,8 @@ export default function EditorPage() {
 
   return (
     <div className="w-full h-full overflow-hidden relative">
-      <div
-        className={`absolute inset-0 transition-opacity duration-300 ${currentScreen === 1 ? "z-10 opacity-100" : "-z-10 opacity-0 pointer-events-none"}`}
-      >
+      {/* Screen 1: 3D Editor — always rendered/visible */}
+      <div className="absolute inset-0 z-10">
         <EditorScreen1
           modelUrl={modelUrl}
           setModelUrl={setModelUrl}
@@ -687,27 +686,31 @@ export default function EditorPage() {
           onClearUvEdits={handleClearUvEdits}
         />
       </div>
-      <div
-        className={`absolute inset-0 transition-opacity duration-300 ${currentScreen === 2 ? "z-10 opacity-100" : "-z-10 opacity-0 pointer-events-none"}`}
-      >
-        <EditorScreen2
-          modelUrl={modelUrl}
-          setModelUrl={setModelUrl}
-          appliedMaterials={editorState.materials}
-          appliedColors={editorState.colors}
-          appliedTextures={editorState.textures}
-          appliedLastApplied={editorState.lastApplied}
-          activeTab={activeTab}
-          onBack={handleBackToModelViewer}
-          isActive={currentScreen === 2}
-          canvasResetKey={canvasResetKey}
-          sceneBgColor={sceneBgColor}
-          sceneBgImage={sceneBgImage}
-          selectedCapUrl={selectedCapUrl}
-          onSelectCap={setSelectedCapUrl}
-          selectedMaterial={selectedMaterial}
-        />
-      </div>
+
+      {/* Screen 2: UV Texture Editor — renders as floating popup overlay */}
+      {currentScreen === 2 && (
+        <div className="absolute inset-0 z-50 pointer-events-none">
+          <EditorScreen2
+            modelUrl={modelUrl}
+            setModelUrl={setModelUrl}
+            appliedMaterials={editorState.materials}
+            appliedColors={editorState.colors}
+            appliedTextures={editorState.textures}
+            appliedLastApplied={editorState.lastApplied}
+            activeTab={activeTab}
+            onBack={handleBackToModelViewer}
+            isActive={currentScreen === 2}
+            canvasResetKey={canvasResetKey}
+            sceneBgColor={sceneBgColor}
+            sceneBgImage={sceneBgImage}
+            selectedCapUrl={selectedCapUrl}
+            onSelectCap={setSelectedCapUrl}
+            selectedMaterial={selectedMaterial}
+            isPopupMode={true}
+            onClosePopup={() => setCurrentScreen(1)}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -959,6 +959,8 @@ export default function EditorScreen2({
   selectedCapUrl,
   onSelectCap,
   selectedMaterial,
+  isPopupMode = false,
+  onClosePopup,
 }) {
   const [showMobilePanel, setShowMobilePanel] = useState(false);
   const [showTapeLayout, setShowTapeLayout] = useState(false);
@@ -967,6 +969,61 @@ export default function EditorScreen2({
   const textureCanvasRef = useRef(null);
   const [textureVersion, setTextureVersion] = useState(0);
   const canvasRef = useRef(null);
+
+  // Popup-mode fullscreen state
+  const [isFullscreenPopup, setIsFullscreenPopup] = useState(false);
+
+  // Popup size state (resizable)
+  const [popupSize, setPopupSize] = useState({ width: 900, height: 600 });
+  const popupResizeRef = useRef({ resizing: false, startX: 0, startY: 0, origWidth: 0, origHeight: 0 });
+
+  const handleResizeStart = (e) => {
+    e.stopPropagation();
+    popupResizeRef.current = {
+      resizing: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      origWidth: popupSize.width,
+      origHeight: popupSize.height,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleResizeMove = (e) => {
+    if (!popupResizeRef.current.resizing) return;
+    e.stopPropagation();
+    const dx = e.clientX - popupResizeRef.current.startX;
+    const dy = e.clientY - popupResizeRef.current.startY;
+    setPopupSize({
+      width: Math.max(500, Math.min(window.innerWidth - 40, popupResizeRef.current.origWidth + dx)),
+      height: Math.max(400, Math.min(window.innerHeight - 40, popupResizeRef.current.origHeight + dy)),
+    });
+  };
+
+  const handleResizeEnd = (e) => {
+    popupResizeRef.current.resizing = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  // Popup drag state
+  const popupDragRef = useRef({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
+  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
+
+  const handlePopupDragStart = (e) => {
+    if (isFullscreenPopup) return;
+    popupDragRef.current = { dragging: true, startX: e.clientX, startY: e.clientY, origX: popupPos.x, origY: popupPos.y };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const handlePopupDragMove = (e) => {
+    if (!popupDragRef.current.dragging) return;
+    const dx = e.clientX - popupDragRef.current.startX;
+    const dy = e.clientY - popupDragRef.current.startY;
+    setPopupPos({ x: popupDragRef.current.origX + dx, y: popupDragRef.current.origY + dy });
+  };
+  const handlePopupDragEnd = (e) => {
+    popupDragRef.current.dragging = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
 
   const [wireframe, setWireframe] = useState(false);
   const [showUv, setShowUv] = useState(true);
@@ -1325,7 +1382,8 @@ export default function EditorScreen2({
 
   const isTextLayer = selectedLayer && selectedLayer.text !== undefined;
 
-  return (
+  // Inner content (used in both popup and full-screen modes)
+  const innerContent = (
     <div className="flex flex-col h-full w-full overflow-hidden bg-white">
       <div className="flex flex-1 overflow-hidden bg-[#f5efe6]">
         {/* ── Left Side Panel ────────────────────────────────────────── */}
@@ -2315,7 +2373,7 @@ export default function EditorScreen2({
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    <span>Exporting...</span>
+                <span>Exporting...</span>
                   </>
                 ) : (
                   <span>Download Now</span>
@@ -2327,4 +2385,127 @@ export default function EditorScreen2({
       )}
     </div>
   );
+
+  // ─── Return: Popup mode wraps innerContent in a floating panel ───────────
+  if (isPopupMode) {
+    return (
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 50 }}
+      >
+        {/* Backdrop when fullscreen */}
+        {isFullscreenPopup && (
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-[1px] pointer-events-auto"
+            onClick={() => setIsFullscreenPopup(false)}
+          />
+        )}
+
+        {/* The floating popup panel */}
+        <div
+          className={`pointer-events-auto absolute bg-white rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.22)] border border-gray-200/80 overflow-hidden flex flex-col transition-all duration-300 ${
+            isFullscreenPopup
+              ? "inset-4 rounded-2xl"
+              : "top-1/2 left-1/2"
+          }`}
+          style={
+            isFullscreenPopup
+              ? {}
+              : {
+                  width: `${popupSize.width}px`,
+                  height: `${popupSize.height}px`,
+                  transform: `translate(calc(-50% + ${popupPos.x}px), calc(-50% + ${popupPos.y}px))`,
+                }
+          }
+        >
+          {/* Popup Title Bar */}
+          <div
+            className={`flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shrink-0 ${!isFullscreenPopup ? "cursor-grab active:cursor-grabbing" : ""}`}
+            onPointerDown={handlePopupDragStart}
+            onPointerMove={handlePopupDragMove}
+            onPointerUp={handlePopupDragEnd}
+            style={{ touchAction: "none" }}
+          >
+            <div className="flex items-center gap-2.5 select-none">
+              <div className="w-7 h-7 rounded-lg bg-[#c05520]/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="#c05520" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v16.5h16.5V3.75H3.75Zm4.5 4.5h7.5v7.5h-7.5v-7.5Z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-sm font-bold text-gray-900">UV Texture Editor</span>
+                <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-[#c05520]/10 text-[#c05520] px-1.5 py-0.5 rounded-full">LIVE</span>
+              </div>
+              {!isFullscreenPopup && (
+                <span className="text-[10px] text-gray-400 ml-1 select-none hidden sm:block">Drag to move</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {/* Apply & Close (goes back to 3D editor) */}
+              <button
+                onClick={() => {
+                  handleSave();
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-[#c05520] hover:bg-[#a04619] text-white text-xs font-bold border-none cursor-pointer transition-all shadow-sm"
+              >
+                Apply & Close
+              </button>
+              {/* Fullscreen toggle */}
+              <button
+                onClick={() => setIsFullscreenPopup((s) => !s)}
+                className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 border-none cursor-pointer transition-colors"
+                title={isFullscreenPopup ? "Exit Fullscreen" : "Fullscreen"}
+              >
+                {isFullscreenPopup ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9V4.5M15 9h4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0l-6-6" />
+                  </svg>
+                )}
+              </button>
+              {/* Close (discard / go back without saving) */}
+              <button
+                onClick={() => onClosePopup?.()}
+                className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-500 border-none cursor-pointer transition-colors"
+                title="Close without applying"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Popup body: the UV editor inner content */}
+          <div className="flex-1 overflow-hidden relative">
+            {innerContent}
+          </div>
+
+          {/* Resize handle (bottom right) */}
+          {!isFullscreenPopup && (
+            <div
+              className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize flex items-end justify-end p-1 select-none z-50"
+              onPointerDown={handleResizeStart}
+              onPointerMove={handleResizeMove}
+              onPointerUp={handleResizeEnd}
+              style={{ touchAction: "none" }}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" className="text-gray-400 fill-current opacity-70 hover:opacity-100 transition-opacity">
+                <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="10" y1="4" x2="4" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="10" y1="7" x2="7" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Normal full-screen mode
+  return innerContent;
 }
+

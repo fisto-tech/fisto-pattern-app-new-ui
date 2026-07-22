@@ -34,7 +34,8 @@ export default function ScenePopup({
   dirLight, setDirLight,
   shadowOpacity, setShadowOpacity,
   customHdri, setCustomHdri,
-  bgImage, setBgImage
+  bgImage, setBgImage,
+  isScaledUp, onToggleScale, onClose
 }) {
   const [showDefaultBgs, setShowDefaultBgs] = useState(false);
   const [loadingBgImage, setLoadingBgImage] = useState(null);
@@ -69,9 +70,52 @@ export default function ScenePopup({
     };
   };
   return (
-    <div className="w-[280px] sm:w-[350px] h-full shrink-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-gray-100/80 overflow-hidden flex flex-col z-20">
-      <div className="p-5 pb-3 border-b border-gray-100">
-        <h2 className="text-xl font-bold text-gray-900 m-0">Environment</h2>
+    <div className="w-full h-full shrink-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-gray-100/80 overflow-hidden flex flex-col z-20 transition-all duration-300">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900 m-0">Environment</h2>
+        <div className="flex items-center gap-1.5">
+          {onToggleScale && (
+            <button
+              onClick={onToggleScale}
+              className="p-1.5 rounded-lg bg-gray-100 hover:bg-orange-50 text-gray-500 hover:text-[#c05520] transition-colors border-none cursor-pointer"
+              title={isScaledUp ? "Scale Down" : "Scale Up (Enlarge)"}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-4 h-4"
+              >
+                {isScaledUp ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 9L4.5 4.5m0 0H9m-4.5 0V9m10.5 6l4.5 4.5m0 0H15m4.5 0v-4.5"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15m-11.25 5.25h4.5m-4.5 0v-4.5m0 4.5L9 15"
+                  />
+                )}
+              </svg>
+            </button>
+          )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
+              title="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="p-5 overflow-y-auto flex-1 flex flex-col gap-6 scroll-smooth" style={{ scrollBehavior: 'smooth' }}>

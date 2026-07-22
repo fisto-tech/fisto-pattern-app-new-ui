@@ -31,7 +31,7 @@ import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.j
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { CAPS } from "../../pages/EditorPage";
-import { BOTTLE_CAP_CONFIGS } from "../../utils/capConfigs";
+import { BOTTLE_CAP_CONFIGS, getCleanCapFileName } from "../../utils/capConfigs";
 import { textureCache } from "../../utils/TextureCache";
 
 const layoutModelsGlob = import.meta.glob('../../assets/layouts/**/*.glb', { eager: true, import: 'default' });
@@ -104,6 +104,7 @@ function DebouncedSlider({ label, value, onChange }) {
 }
 
 import LeftSidebar from "./LeftSidebar";
+import BottomBar from "./BottomBar";
 import ModelsPopup, { MODELS } from "./ModelsPopup";
 import LayoutPopup, { getSingleModelUrl } from "./LayoutPopup";
 import modelPositionsConfig from "./modelPositions.json";
@@ -3561,6 +3562,8 @@ export default function EditorScreen1({
     return base;
   };
 
+  const [wireframe, setWireframe] = useState(false);
+  const [isScaledUp, setIsScaledUp] = useState(false);
   // Dev cap sizing and positioning offsets state (grouped by modelId)
   const [capModelOffsets, setCapModelOffsets] = useState(getInitialCapOffsets);
 
@@ -3582,9 +3585,7 @@ export default function EditorScreen1({
 
   const currentCapOffsets = useMemo(() => {
     const modelConfig = capModelOffsets[currentModelKey] || {};
-    const capFile = selectedCapUrl
-      ? selectedCapUrl.split("/").pop()
-      : "default";
+    const capFile = getCleanCapFileName(selectedCapUrl);
     return (
       modelConfig[capFile] ||
       modelConfig["default"] || {
@@ -3599,9 +3600,7 @@ export default function EditorScreen1({
   }, [capModelOffsets, currentModelKey, selectedCapUrl]);
 
   const updateCapOffset = (field, val) => {
-    const capFile = selectedCapUrl
-      ? selectedCapUrl.split("/").pop()
-      : "default";
+    const capFile = getCleanCapFileName(selectedCapUrl);
     setCapModelOffsets((prev) => {
       const modelConfig = prev[currentModelKey] || {};
       const current = modelConfig[capFile] ||
@@ -3627,9 +3626,7 @@ export default function EditorScreen1({
   };
 
   const updateCapUniformScale = (val) => {
-    const capFile = selectedCapUrl
-      ? selectedCapUrl.split("/").pop()
-      : "default";
+    const capFile = getCleanCapFileName(selectedCapUrl);
     setCapModelOffsets((prev) => {
       const modelConfig = prev[currentModelKey] || {};
       const current = modelConfig[capFile] ||
@@ -3657,9 +3654,7 @@ export default function EditorScreen1({
   };
 
   const saveCapConfig = () => {
-    const capFile = selectedCapUrl
-      ? selectedCapUrl.split("/").pop()
-      : "default";
+    const capFile = getCleanCapFileName(selectedCapUrl);
     const localKey = `cap_offset_${currentModelKey}_${capFile}`;
     localStorage.setItem(localKey, JSON.stringify(currentCapOffsets));
     setPickerMessage(`Saved cap config for ${capFile}`);
@@ -4371,122 +4366,423 @@ export default function EditorScreen1({
         </div>
       )}
 
-      {/* Left Sidebar Container */}
-      <div className="editor-left-container absolute left-6 top-6 bottom-6 z-10 flex gap-[0.5vw] pointer-events-none">
-        <div className="pointer-events-auto h-full">
-          <LeftSidebar active={activeTab} setActive={setActiveTab} />
+      {/* Top Header Bar */}
+      <div className="absolute top-6 left-6 right-6 z-30 flex items-center justify-between pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <button
+            onClick={() => navigate("/modelsMockup")}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-gray-100/80 shadow-sm text-gray-700 hover:text-[#c05520] font-bold text-xs cursor-pointer transition-all"
+            title="Back to Mockup Gallery"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2.5}
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+              />
+            </svg>
+            <span>Back to Mockups</span>
+          </button>
         </div>
 
-        {/* Popups */}
-        <div
-          className={`transition-all duration-300 overflow-hidden shrink-0 pointer-events-auto h-full ${activeTab === "models" || activeTab === "layout" || activeTab === "scene" || activeTab === "gallery" ? "w-[280px] sm:w-[350px]" : "w-0"}`}
-        >
-          {activeTab === "models" && (
-            <ModelsPopup
-              onSelectModel={(url) => {
-                if (url === modelUrl) return;
-                // Clear all styles and start fresh
-                if (onResetAll) onResetAll();
-                setIsLidOpen(false);
-                if (onSelectCap) onSelectCap("none");
-                if (orbitControlsRef.current) {
-                  orbitControlsRef.current.reset();
-                  orbitControlsRef.current.setAzimuthalAngle(0);
-                  orbitControlsRef.current.setPolarAngle(Math.PI / 2);
-                  orbitControlsRef.current.target.set(0, getModelCenterY(), 0);
-                  orbitControlsRef.current.update();
-                }
-                setModelUrl(url);
-              }}
-              currentModelUrl={modelUrl}
-            />
-          )}
-          {activeTab === "layout" && (
-            <LayoutPopup
-              currentModelUrl={modelUrl}
-              selectedCapUrl={selectedCapUrl}
-              currentCapOffsets={currentCapOffsets}
-              updateCapOffset={updateCapOffset}
-              updateCapUniformScale={updateCapUniformScale}
-              onSaveCapConfig={saveCapConfig}
-              isLayoutSelected={!MODELS.some((m) => m.modelUrl === modelUrl)}
-              onSelectLayout={(url) => {
-                if (url === modelUrl) {
-                  const singleModelUrl = getSingleModelUrl(modelUrl);
-                  setModelUrl(singleModelUrl);
-                  return;
-                }
-                // Layout model don't refresh/reset anything, just load with edits
-                setModelUrl(url);
-              }}
-            />
-          )}
-          {activeTab === "scene" && (
-            <ScenePopup
-              bgColor={bgColor}
-              setBgColor={setBgColor}
-              hdriPreset={hdriPreset}
-              setHdriPreset={setHdriPreset}
-              envIntensity={envIntensity}
-              setEnvIntensity={setEnvIntensity}
-              ambLight={ambLight}
-              setAmbLight={setAmbLight}
-              dirLight={dirLight}
-              setDirLight={setDirLight}
-              shadowOpacity={shadowOpacity}
-              setShadowOpacity={setShadowOpacity}
-              customHdri={customHdri}
-              setCustomHdri={setCustomHdri}
-              bgImage={bgImage}
-              setBgImage={setBgImage}
-            />
-          )}
-          {activeTab === "gallery" && (
-            <GalleryPopup
-              onLoadScene={(scene) => {
-                onLoadScene(scene);
-                setActiveTab(null);
-              }}
-            />
-          )}
+        <div className="flex items-center gap-2 pointer-events-auto bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-gray-100/80 shadow-sm">
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 disabled:opacity-40 border-none bg-transparent cursor-pointer transition-colors"
+            title="Undo"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+            </svg>
+          </button>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 disabled:opacity-40 border-none bg-transparent cursor-pointer transition-colors"
+            title="Redo"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
+            </svg>
+          </button>
+          <div className="w-[1px] h-4 bg-gray-200 mx-1" />
+          <button
+            onClick={onResetAll}
+            className="px-3 py-1 rounded-lg text-xs font-bold text-gray-600 hover:text-red-500 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
+          >
+            Reset All
+          </button>
         </div>
 
-        {/* Edit Popup Panel */}
-        {activeTab === "edit" && !showCustomSize && (
-          <div className="editor-edit-popup pointer-events-auto w-[280px] h-fit max-h-full bg-white rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.14)] ring-1 ring-gray-100 p-5 flex flex-col gap-4 overflow-y-auto">
-            <div className="w-full flex items-center justify-between p-4 rounded-2xl border border-gray-100 bg-gray-50">
-              <div className="flex items-center gap-3">
-                <div className="w-[1.8vw] h-[1.8vw] rounded-xl bg-white shadow-sm flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-[1.1vw] h-[1.1vw] text-gray-600"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 12h-15m0 0v1.5m0-1.5v-1.5m15 1.5v1.5m0-1.5v-1.5m-12 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18h12a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3Z"
-                    />
-                  </svg>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-[#111827] text-sm">Size</span>
-                  <span className="text-[11px] font-medium text-gray-500">
-                    {baseDimensions
-                      ? `${baseDimensions.length} x ${baseDimensions.width} x ${baseDimensions.height} mm`
-                      : "Loading..."}
-                  </span>
-                </div>
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Show Default Labels toggle — compact for top bar */}
+          {!(
+            (appliedTextures && Object.keys(appliedTextures).length > 0) ||
+            (appliedColors && Object.keys(appliedColors).length > 0) ||
+            (appliedMaterials && Object.keys(appliedMaterials).length > 0)
+          ) && (
+            <div className="bg-white/90 backdrop-blur-md rounded-xl px-3 py-1.5 border border-gray-100/80 shadow-sm flex items-center gap-2">
+              <span
+                className="text-xs font-semibold text-gray-600 select-none cursor-pointer whitespace-nowrap"
+                onClick={() => setShowDefaultLabels(!showDefaultLabels)}
+              >
+                Labels
+              </span>
+              <div
+                onClick={() => setShowDefaultLabels(!showDefaultLabels)}
+                className={`w-9 h-5 flex shrink-0 items-center rounded-full p-0.5 cursor-pointer transition-colors ${showDefaultLabels ? "bg-[#c05520]" : "bg-gray-300"}`}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${showDefaultLabels ? "translate-x-4" : ""}`}
+                />
               </div>
             </div>
+          )}
+          <button
+            onClick={() => setShowSaveModal(true)}
+            className="px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-gray-100/80 shadow-sm text-gray-800 hover:text-[#c05520] font-bold text-xs cursor-pointer transition-all"
+          >
+            Save Scene
+          </button>
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="px-4 py-2 rounded-xl bg-[#c05520] hover:bg-[#a04619] border-none shadow-sm text-white font-bold text-xs cursor-pointer transition-all flex items-center gap-1.5"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Export
+          </button>
+        </div>
+      </div>
+
+      {/* Popups Bottom Drawer Container (Centered above bottom navigation bar) */}
+      <div className="editor-popups-container fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex pointer-events-none max-w-[95vw]">
+        <div
+          className={`transition-all duration-300 overflow-hidden shrink-0 pointer-events-auto bg-white rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.12)] border border-gray-150 flex flex-col ${
+            activeTab && activeTab !== "uv_editor"
+              ? isScaledUp
+                ? "w-[640px] h-[400px] p-5 opacity-100 translate-y-0"
+                : "w-[380px] h-[330px] p-5 opacity-100 translate-y-0"
+              : "w-0 h-0 p-0 opacity-0 translate-y-4 pointer-events-none border-none shadow-none"
+          }`}
+        >
+          <div className="flex-1 overflow-y-auto flex flex-col gap-4 min-h-0">
+            {activeTab === "models" && (
+              <ModelsPopup
+                onSelectModel={(url) => {
+                  if (url === modelUrl) return;
+                  if (onResetAll) onResetAll();
+                  setIsLidOpen(false);
+                  if (onSelectCap) onSelectCap("none");
+                  if (orbitControlsRef.current) {
+                    orbitControlsRef.current.reset();
+                    orbitControlsRef.current.setAzimuthalAngle(0);
+                    orbitControlsRef.current.setPolarAngle(Math.PI / 2);
+                    orbitControlsRef.current.target.set(0, getModelCenterY(), 0);
+                    orbitControlsRef.current.update();
+                  }
+                  setModelUrl(url);
+                }}
+                currentModelUrl={modelUrl}
+                isScaledUp={isScaledUp}
+                onToggleScale={() => setIsScaledUp((s) => !s)}
+                onClose={() => setActiveTab(null)}
+              />
+            )}
+            {activeTab === "layout" && (
+              <LayoutPopup
+                currentModelUrl={modelUrl}
+                selectedCapUrl={selectedCapUrl}
+                currentCapOffsets={currentCapOffsets}
+                updateCapOffset={updateCapOffset}
+                updateCapUniformScale={updateCapUniformScale}
+                onSaveCapConfig={saveCapConfig}
+                isLayoutSelected={!MODELS.some((m) => m.modelUrl === modelUrl)}
+                onSelectLayout={(url) => {
+                  if (url === modelUrl) {
+                    const singleModelUrl = getSingleModelUrl(modelUrl);
+                    setModelUrl(singleModelUrl);
+                    return;
+                  }
+                  setModelUrl(url);
+                }}
+                isScaledUp={isScaledUp}
+                onToggleScale={() => setIsScaledUp((s) => !s)}
+                onClose={() => setActiveTab(null)}
+              />
+            )}
+            {activeTab === "scene" && (
+              <ScenePopup
+                bgColor={bgColor}
+                setBgColor={setBgColor}
+                hdriPreset={hdriPreset}
+                setHdriPreset={setHdriPreset}
+                envIntensity={envIntensity}
+                setEnvIntensity={setEnvIntensity}
+                ambLight={ambLight}
+                setAmbLight={setAmbLight}
+                dirLight={dirLight}
+                setDirLight={setDirLight}
+                shadowOpacity={shadowOpacity}
+                setShadowOpacity={setShadowOpacity}
+                customHdri={customHdri}
+                setCustomHdri={setCustomHdri}
+                bgImage={bgImage}
+                setBgImage={setBgImage}
+                isScaledUp={isScaledUp}
+                onToggleScale={() => setIsScaledUp((s) => !s)}
+                onClose={() => setActiveTab(null)}
+              />
+            )}
+            {activeTab === "gallery" && (
+              <GalleryPopup
+                onLoadScene={(scene) => {
+                  onLoadScene(scene);
+                  setActiveTab(null);
+                }}
+                isScaledUp={isScaledUp}
+                onToggleScale={() => setIsScaledUp((s) => !s)}
+                onClose={() => setActiveTab(null)}
+              />
+            )}
+
+            {/* Features (Edit) Popup Content wrapped inside bottom-sheet */}
+            {activeTab === "edit" && !showCustomSize && (
+              <div className="flex flex-col gap-4 flex-1 h-full">
+                {/* Title & Close header */}
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-[#c05520]/10 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#c05520" className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 0 0 3.94 4.092l3.4-1.7a3 3 0 0 0 1.34-1.34l1.7-3.4a3 3 0 0 0-.843-3.666l-1.025-.82a3 3 0 0 0-3.666-.843l-3.4 1.7a3 3 0 0 0-1.34 1.34l-1.7 3.4Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-bold text-gray-900">Features</span>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab(null)}
+                    className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4">
+                  {/* Size block */}
+                  <div className="w-full flex items-center justify-between p-3 rounded-2xl border border-gray-100 bg-gray-50/70">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-600">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15m0 0v1.5m0-1.5v-1.5m15 1.5v1.5m0-1.5v-1.5m-12 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18h12a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3Z" />
+                        </svg>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-800 text-xs">Size</span>
+                        <span className="text-[10px] font-medium text-gray-500">
+                          {baseDimensions
+                            ? `${baseDimensions.length} x ${baseDimensions.width} x ${baseDimensions.height} mm`
+                            : "Loading..."}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Custom features button */}
+                  <button
+                    onClick={() => onProceed(selectedMaterial)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl border border-[#c05520] bg-orange-50/20 hover:bg-orange-50/50 transition-colors cursor-pointer shadow-sm"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6.5 h-6.5 rounded-lg bg-white shadow-sm flex items-center justify-center border border-orange-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520]">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                        </svg>
+                      </div>
+                      <span className="font-bold text-[#c05520] text-xs">
+                        Custom Features
+                      </span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520] animate-bounce-right-loop">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
+
+                  {/* Pick & Paint */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-gray-700">Pick &amp; Paint</label>
+                    <div className="flex items-center gap-2 justify-start">
+                      <button
+                        onClick={() => {
+                          if (onApplyColor) onApplyColor("all", null);
+                          setBrushColor("__none__");
+                          setColorBrushActive(false);
+                        }}
+                        title="Remove applied colors"
+                        className="w-7 h-7 rounded-lg border-2 border-red-200 bg-red-50/50 cursor-pointer flex items-center justify-center transition-all hover:scale-105"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#ef4444" className="w-3.5 h-3.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setBrushColor("transparent");
+                          setColorBrushActive(true);
+                        }}
+                        className={`w-7 h-7 rounded-lg border-2 transition-all hover:scale-105 cursor-pointer ${colorBrushActive && brushColor === "transparent" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
+                        style={{
+                          background: "conic-gradient(#cbd5e1 25%, white 0 50%, #cbd5e1 0 75%, white 0)",
+                          backgroundSize: "6px 6px",
+                        }}
+                        title="Paint transparent"
+                      />
+
+                      <div
+                        className={`relative w-7 h-7 rounded-lg overflow-hidden cursor-pointer transition-all border-2 ${colorBrushActive && brushColor !== "transparent" && brushColor !== "__none__" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
+                        style={{ background: brushColor === "__none__" ? "#f3f4f6" : brushColor }}
+                        title="Pick custom color"
+                      >
+                        <input
+                          type="color"
+                          value={brushColor === "__none__" ? "#3b82f6" : brushColor}
+                          onChange={(e) => {
+                            setBrushColor(e.target.value);
+                            setColorBrushActive(true);
+                          }}
+                          className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 opacity-0 cursor-pointer z-10"
+                        />
+                        {brushColor === "__none__" && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-pink-400 to-orange-400 opacity-80" />
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (!colorBrushActive && brushColor === "__none__") {
+                            setPickerMessage("Pick a color first!");
+                            setFlashColorPicker(true);
+                            setTimeout(() => { setPickerMessage(""); setFlashColorPicker(false); }, 3000);
+                            return;
+                          }
+                          setColorBrushActive((v) => !v);
+                          setPickerMessage("");
+                        }}
+                        className={`flex items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${colorBrushActive ? "bg-[#c05520] text-white border-transparent" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122A3 3 0 0012 21M9.53 16.122L12 11M9.53 16.122l1.688-1.688m.782 5.09a3 3 0 004.09-3.94l.82-1.025m-4.91 4.965l-.82 1.025M12 11l5-5" />
+                        </svg>
+                        {colorBrushActive ? "Brush On" : "Pick Color"}
+                      </button>
+                    </div>
+                    {pickerMessage && <span className="text-[10px] text-red-500 font-bold">{pickerMessage}</span>}
+                  </div>
+
+                  {/* Metallic & Roughness sliders */}
+                  <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                    <DebouncedSlider
+                      label="Metallic"
+                      value={appliedMetallic?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.1}
+                      onChange={(val) => onApplyMetallic && onApplyMetallic(selectedMaterial, val)}
+                    />
+                    <DebouncedSlider
+                      label="Roughness"
+                      value={appliedRoughness?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.5}
+                      onChange={(val) => onApplyRoughness && onApplyRoughness(selectedMaterial, val)}
+                    />
+                  </div>
+
+                  {/* Texture library */}
+                  <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-gray-700">Textures</span>
+                        <div className="relative">
+                          <button
+                            onClick={() => setIsTextureDropdownOpen(!isTextureDropdownOpen)}
+                            className="p-1 rounded bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 cursor-pointer flex items-center"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                            </svg>
+                          </button>
+                          {isTextureDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setIsTextureDropdownOpen(false)} />
+                              <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto py-1">
+                                {textureLibrary.map((category) => (
+                                  <button
+                                    key={category.category}
+                                    onClick={() => {
+                                      setActiveTextureCategory(category.category);
+                                      setIsTextureDropdownOpen(false);
+                                    }}
+                                    className={`w-full px-3 py-1.5 text-left text-[11px] font-semibold hover:bg-gray-50 transition-colors cursor-pointer ${activeTextureCategory === category.category ? "text-[#c05520] bg-orange-50/50" : "text-gray-700"}`}
+                                  >
+                                    {category.category}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {!!(appliedMaterials?.[selectedMaterial || "all"] || appliedMaterials?.["all"]) && (
+                        <button
+                          onClick={() => onApplyMaterial && onApplyMaterial(selectedMaterial, null)}
+                          className="text-[10px] text-gray-500 hover:text-red-600 transition-colors cursor-pointer font-bold"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5 max-h-[140px] overflow-y-auto pr-0.5">
+                      {textureLibrary
+                        .find((c) => c.category === activeTextureCategory)
+                        ?.textures.map((texture) => (
+                          <button
+                            key={texture.id}
+                            title={texture.name}
+                            disabled={isModelLoading}
+                            onClick={() => {
+                              if (isModelLoading || !onApplyMaterial) return;
+                              setIsModelLoading(true);
+                              setTimeout(() => {
+                                onApplyMaterial(selectedMaterial, texture);
+                                setTimeout(() => setIsModelLoading(false), 800);
+                              }, 50);
+                            }}
+                            className={`relative rounded-lg border-2 overflow-hidden aspect-square flex items-center justify-center transition-all ${appliedMaterials?.[selectedMaterial || "all"]?.id === texture.id ? "border-[#c05520]" : "border-transparent"}`}
+                          >
+                            {texture.preview ? (
+                              <img src={texture.preview} alt={texture.name} className="absolute inset-0 w-full h-full object-cover" />
+                            ) : (
+                              <div className="text-[8px] text-gray-400 p-0.5">{texture.name}</div>
+                            )}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
             <button
               onClick={() => onProceed(selectedMaterial)}
@@ -4978,207 +5274,14 @@ export default function EditorScreen1({
                 </div>
               </div>
             )}
-          </div>
-        )}
-
         {activeTab === "scene" && (
           <HdriLoadingOverlay isModelLoading={isModelLoading} />
         )}
-
-        {/* Custom Size Editor */}
-        {activeTab === "edit" && showCustomSize && (
-          <div className="pointer-events-auto h-fit">
-            <div className="w-[360px] bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowCustomSize(false)}
-                    className="w-[1.8vw] h-[1.8vw] rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer border border-gray-100 shadow-sm"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                      className="w-[1.1vw] h-[1.1vw] text-gray-700"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                      />
-                    </svg>
-                  </button>
-                  <h2 className="text-[22px] font-bold text-[#111827] m-0">
-                    Custom size
-                  </h2>
-                </div>
-                <button
-                  onClick={() => {
-                    setCustomSizeInput(baseDimensions);
-                    onApplyCustomSize(baseDimensions);
-                  }}
-                  title="Reset to original size"
-                  className="w-[1.8vw] h-[1.8vw] rounded-xl bg-white hover:bg-gray-50 flex items-center justify-center transition-colors cursor-pointer border border-gray-100 shadow-sm"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-[1.1vw] h-[1.1vw] text-gray-600"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <div>
-                  <label className="text-[13px] font-medium text-gray-500 mb-1 block">
-                    Length
-                  </label>
-                  <input
-                    type="number"
-                    value={customSizeInput.length}
-                    onChange={(e) =>
-                      setCustomSizeInput((prev) => ({
-                        ...prev,
-                        length: Number(e.target.value),
-                      }))
-                    }
-                    className="w-full py-3 px-3 border border-gray-200 rounded-xl outline-none text-center font-semibold text-base text-gray-800 focus:border-[#a855f7]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[13px] font-medium text-gray-500 mb-1 block">
-                    Width
-                  </label>
-                  <input
-                    type="number"
-                    value={customSizeInput.width}
-                    onChange={(e) =>
-                      setCustomSizeInput((prev) => ({
-                        ...prev,
-                        width: Number(e.target.value),
-                      }))
-                    }
-                    className="w-full py-3 px-3 border border-gray-200 rounded-xl outline-none text-center font-semibold text-base text-gray-800 focus:border-[#a855f7]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[13px] font-medium text-gray-500 mb-1 block">
-                    Height
-                  </label>
-                  <input
-                    type="number"
-                    value={customSizeInput.height}
-                    onChange={(e) =>
-                      setCustomSizeInput((prev) => ({
-                        ...prev,
-                        height: Number(e.target.value),
-                      }))
-                    }
-                    className="w-full py-3 px-3 border border-gray-200 rounded-xl outline-none text-center font-semibold text-base text-gray-800 focus:border-[#a855f7]"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={() => onApplyCustomSize(customSizeInput)}
-                className="w-full py-3.5 rounded-xl bg-[#c05520] hover:bg-[#a04619] text-white font-bold text-base transition-colors border-none cursor-pointer shadow-sm"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Export & Save Action Buttons Column */}
-      <div className="absolute right-[5vw] top-[2vh] z-10 flex flex-row gap-4 items-start pointer-events-none">
-        {/* Toggle Default Labels */}
-        {!(
-          (appliedTextures && Object.keys(appliedTextures).length > 0) ||
-          (appliedColors && Object.keys(appliedColors).length > 0) ||
-          (appliedMaterials && Object.keys(appliedMaterials).length > 0)
-        ) && (
-            <div className="bg-white/90 backdrop-blur-sm rounded-[20px] p-3 shadow-lg flex items-center gap-3 pointer-events-auto border border-gray-100/50">
-              <span
-                className="text-sm font-bold text-gray-700 select-none cursor-pointer whitespace-nowrap"
-                onClick={() => setShowDefaultLabels(!showDefaultLabels)}
-              >
-                Show Default Labels
-              </span>
-              <div
-                onClick={() => setShowDefaultLabels(!showDefaultLabels)}
-                className={`w-11 h-6 flex flex-shrink-0 items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${showDefaultLabels ? "bg-[#c05520]" : "bg-gray-300"
-                  }`}
-              >
-                <div
-                  className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${showDefaultLabels ? "translate-x-5" : ""
-                    }`}
-                />
-              </div>
-            </div>
-          )}
 
-        {/* Save & Export Container */}
-        <div className="bg-white rounded-[20px] p-2 shadow-lg flex flex-col gap-2 items-center justify-center pointer-events-auto">
-          <Tooltip1 label="Save Scene" side="left">
-            <button
-              onClick={() => setShowSaveModal(true)}
-              className="w-8 h-8 rounded-full bg-transparent flex items-center justify-center border-none cursor-pointer hover:bg-gray-100 text-[#c05520] transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.2}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
-          <div className="w-5 h-[1px] bg-gray-100" />
-          <Tooltip1 label="Export" side="left">
-            <button
-              onClick={() => setShowExportModal(true)}
-              className="w-8 h-8 rounded-full bg-transparent flex items-center justify-center border-none cursor-pointer hover:bg-gray-100 text-[#c05520] transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.2}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
-        </div>
-      </div>
-
-      {/* Right Floating Pill */}
-      <div className="editor-right-tools absolute right-[1.5vw] top-[2vh] z-10 bg-white rounded-full p-2 shadow-lg flex flex-col gap-[0.6vw]">
+      {/* Right Floating Tools Pill — repositioned below top header */}
+      <div className="editor-right-tools absolute right-[1.5vw] top-24 z-10 bg-white rounded-full p-2 shadow-lg flex flex-col gap-[0.6vw]">
         <Tooltip1 label="Select" side="left">
           <button
             onClick={() => handleSetToolMode("cursor")}
@@ -6420,6 +6523,29 @@ export default function EditorScreen1({
           </div>
         </div>
       )}
+
+      {/* Floating Bottom Navigation Bar */}
+      <BottomBar
+        activeTab={activeTab}
+        setActiveTab={(tab) => {
+          if (tab === "uv_editor") {
+            onProceed(selectedMaterial);
+          } else {
+            setActiveTab(tab);
+          }
+        }}
+        onResetView={() => {
+          if (orbitControlsRef.current) {
+            orbitControlsRef.current.reset();
+            orbitControlsRef.current.setAzimuthalAngle(0);
+            orbitControlsRef.current.setPolarAngle(Math.PI / 2);
+            orbitControlsRef.current.target.set(0, getModelCenterY(), 0);
+            orbitControlsRef.current.update();
+          }
+        }}
+        onToggleWireframe={() => setWireframe((w) => !w)}
+        wireframe={wireframe}
+      />
     </div>
   );
 }

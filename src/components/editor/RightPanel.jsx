@@ -165,7 +165,7 @@ export default function RightPanel({
     }
 
     const modelConfig = BOTTLE_CAP_CONFIGS[modelKey] || {};
-    const capFile = selectedCapUrl.split("/").pop();
+    const capFile = getCleanCapFileName(selectedCapUrl);
     return modelConfig[capFile] || modelConfig["default"] || null;
   }, [modelUrl, selectedCapUrl]);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -1544,7 +1544,7 @@ function AutoSizedModel({
     }
 
     const modelConfig = BOTTLE_CAP_CONFIGS[modelKey] || {};
-    const capFile = selectedCapUrl.split("/").pop();
+    const capFile = getCleanCapFileName(selectedCapUrl);
     return modelConfig[capFile] || modelConfig["default"] || null;
   }, [modelUrl, selectedCapUrl]);
   // No uvLayout memoization needed
