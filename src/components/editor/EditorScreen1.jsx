@@ -67,7 +67,7 @@ function BackgroundImage({ url }) {
   return null;
 }
 
-function DebouncedSlider({ label, value, onChange }) {
+function DebouncedSlider({ label, value, onChange, compact = false }) {
   const [localVal, setLocalVal] = useState(value);
   const timeoutRef = useRef(null);
 
@@ -85,19 +85,18 @@ function DebouncedSlider({ label, value, onChange }) {
   };
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between items-center text-xs font-semibold text-gray-500">
-        <span>{label}</span>
-        <span>{Math.round(localVal * 100)}%</span>
+    <div className={`flex ${compact ? 'items-center gap-3 shrink-0' : 'flex-col gap-1.5'}`}>
+      <div className={`flex items-center text-xs font-extrabold text-gray-600 shrink-0 ${compact ? 'gap-1.5' : 'justify-between w-full'}`}>
+        <span className={compact ? (label === "Roughness" ? "min-w-[68px] text-left" : "min-w-[52px] text-left") : ""}>{label}</span>
+        <span className="text-[#c05520]">{Math.round(localVal * 100)}%</span>
       </div>
       <input
         type="range"
-        // min="0"
         max="1"
         step="0.01"
         value={localVal}
         onChange={handleChange}
-        className="w-full accent-[#c05520] cursor-pointer h-1 bg-gray-100 rounded-lg appearance-none"
+        className={`accent-[#c05520] cursor-pointer h-1.5 bg-gray-200 rounded-lg appearance-none ${compact ? 'w-28' : 'w-full'}`}
       />
     </div>
   );
@@ -129,6 +128,7 @@ function FloatingPopupWrapper({
   pos,
   setPos,
   children,
+  multiWindow = false,
 }) {
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
 
@@ -149,6 +149,21 @@ function FloatingPopupWrapper({
   };
 
   if (!isOpen) return null;
+
+  if (!multiWindow) {
+    const widthClass = (tabId === "layouts" || tabId === "layout" || tabId === "textures") ? "w-fit max-w-[95vw]" : "w-[95vw] md:w-[90vw] lg:w-[85vw] xl:w-[80vw] max-w-5xl";
+    return (
+      <div
+        onPointerDown={onFocus}
+        className={`fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 flex flex-col pointer-events-auto transition-all duration-300 ${widthClass} overflow-hidden`}
+        style={{ zIndex }}
+      >
+        <div className="flex-1 py-1 px-4.5 flex flex-col gap-3 min-h-0 select-text overflow-x-auto overflow-y-hidden no-scrollbar">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -3095,13 +3110,14 @@ export default function EditorScreen1({
   const isLayoutModel = useMemo(() => {
     return !MODELS.some((m) => m.modelUrl === modelUrl);
   }, [modelUrl]);
+  const textureScrollRef = useRef(null);
   const [showTools, setShowTools] = useState(false);
   
-  // Floating Popups state (spread to the sides to keep the center 3D model fully visible)
   const [popupPositions, setPopupPositions] = useState({
     models: { x: -380, y: -80 },
     layout: { x: -380, y: 120 },
     edit: { x: 380, y: -80 },
+    textures: { x: 380, y: -80 },
     scene: { x: 380, y: 120 },
     gallery: { x: 0, y: -150 },
   });
@@ -3110,6 +3126,7 @@ export default function EditorScreen1({
     models: 30,
     layout: 30,
     edit: 30,
+    textures: 30,
     scene: 30,
     gallery: 30,
   });
@@ -3372,6 +3389,7 @@ export default function EditorScreen1({
       }
 
       localStorage.setItem("fisto_saved_scenes", JSON.stringify(parsed));
+      window.dispatchEvent(new CustomEvent("fisto_scene_saved"));
       setSaveSceneName("");
       setShowSaveModal(false);
       setShowOverwriteConfirm(false);
@@ -3482,6 +3500,26 @@ export default function EditorScreen1({
         clearTimeout(textureFallbackTimeoutRef.current);
     };
   }, []);
+
+  const handleCustomTextureUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const customTextureObj = {
+      id: `custom_${Date.now()}`,
+      name: file.name || "Custom Texture",
+      url: url,
+      preview: url,
+      isCustom: true
+    };
+    if (onApplyMaterial) {
+      setIsModelLoading(true);
+      setTimeout(() => {
+        onApplyMaterial(selectedMaterial, customTextureObj);
+        setTimeout(() => setIsModelLoading(false), 800);
+      }, 50);
+    }
+  };
 
   // Fade and slide in entry animations for editor UI panels
   useEffect(() => {
@@ -4484,7 +4522,7 @@ export default function EditorScreen1({
           </button>
         </div>
 
-        <div className="flex items-center gap-2 pointer-events-auto bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-gray-100/80 shadow-sm">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-auto bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-gray-100/80 shadow-sm">
           <button
             onClick={onUndo}
             disabled={!canUndo}
@@ -4566,6 +4604,7 @@ export default function EditorScreen1({
         onFocus={() => bringToFront("models")}
         pos={popupPositions.models}
         setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, models: newPos }))}
+        multiWindow={multiWindow}
       >
         <ModelsPopup
           onSelectModel={(url) => {
@@ -4598,6 +4637,7 @@ export default function EditorScreen1({
         onFocus={() => bringToFront("layout")}
         pos={popupPositions.layout}
         setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, layout: newPos }))}
+        multiWindow={multiWindow}
       >
         <LayoutPopup
           currentModelUrl={modelUrl}
@@ -4618,6 +4658,7 @@ export default function EditorScreen1({
           isScaledUp={isScaledUp}
           onToggleScale={() => setIsScaledUp((s) => !s)}
           onClose={() => setActiveTab(null)}
+          isHorizontal={!multiWindow}
         />
       </FloatingPopupWrapper>
 
@@ -4630,6 +4671,7 @@ export default function EditorScreen1({
         onFocus={() => bringToFront("scene")}
         pos={popupPositions.scene}
         setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, scene: newPos }))}
+        multiWindow={multiWindow}
       >
         <ScenePopup
           bgColor={bgColor}
@@ -4651,6 +4693,7 @@ export default function EditorScreen1({
           isScaledUp={isScaledUp}
           onToggleScale={() => setIsScaledUp((s) => !s)}
           onClose={() => setActiveTab(null)}
+          isHorizontal={!multiWindow}
         />
       </FloatingPopupWrapper>
 
@@ -4663,6 +4706,7 @@ export default function EditorScreen1({
         onFocus={() => bringToFront("gallery")}
         pos={popupPositions.gallery}
         setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, gallery: newPos }))}
+        multiWindow={multiWindow}
       >
         <GalleryPopup
           onLoadScene={(scene) => {
@@ -4672,10 +4716,11 @@ export default function EditorScreen1({
           isScaledUp={isScaledUp}
           onToggleScale={() => setIsScaledUp((s) => !s)}
           onClose={() => setActiveTab(null)}
+          isHorizontal={!multiWindow}
         />
       </FloatingPopupWrapper>
 
-      {/* Features (Edit) Popup Content wrapped inside draggable floating window */}
+      {/* Edit Popup Content wrapped inside draggable floating window */}
       <FloatingPopupWrapper
         tabId="edit"
         isOpen={!!openTabs.edit && !showCustomSize}
@@ -4686,74 +4731,59 @@ export default function EditorScreen1({
         pos={popupPositions.edit}
         setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, edit: newPos }))}
         initialHeight={370}
+        multiWindow={multiWindow}
       >
-        <div className="flex flex-col gap-4 flex-1 h-full">
+        <div className="flex flex-col gap-2.5 flex-1 h-full">
           {/* Title & Close header */}
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[#c05520]/10 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#c05520" className="w-3.5 h-3.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 0 0 3.94 4.092l3.4-1.7a3 3 0 0 0 1.34-1.34l1.7-3.4a3 3 0 0 0-.843-3.666l-1.025-.82a3 3 0 0 0-3.666-.843l-3.4 1.7a3 3 0 0 0-1.34 1.34l-1.7 3.4Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                </svg>
+          {multiWindow && (
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-[#c05520]/10 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#c05520" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 0 0 3.94 4.092l3.4-1.7a3 3 0 0 0 1.34-1.34l1.7-3.4a3 3 0 0 0-.843-3.666l-1.025-.82a3 3 0 0 0-3.666-.843l-3.4 1.7a3 3 0 0 0-1.34 1.34l-1.7 3.4Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                  </svg>
+                </div>
+                <span className="text-sm font-bold text-gray-900">Edit</span>
               </div>
-              <span className="text-sm font-bold text-gray-900">Features</span>
+              <button
+                onClick={() => setActiveTab(null)}
+                className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={() => setActiveTab(null)}
-              className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          )}
 
-          <div className="flex-1 overflow-y-auto pr-1 pb-6 flex flex-col gap-4">
+          <div className={!multiWindow ? "flex-1 overflow-x-auto no-scrollbar py-1 flex items-center gap-6 min-w-0" : "flex-1 overflow-y-auto pr-1 pb-6 flex flex-col gap-4"}>
             {/* Size block */}
-            <div className="w-full flex items-center justify-between p-3 rounded-2xl border border-gray-100 bg-gray-50/70">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center">
+            <div className={`flex items-center justify-between p-3.5 rounded-xl border border-gray-100 bg-gray-50/70 shrink-0 ${!multiWindow ? 'w-fit min-w-[180px] h-14' : 'w-full'}`}>
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded bg-white shadow-sm flex items-center justify-center shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-600">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15m0 0v1.5m0-1.5v-1.5m15 1.5v1.5m0-1.5v-1.5m-12 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18h12a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3Z" />
                   </svg>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-gray-800 text-xs">Size</span>
-                  <span className="text-[10px] font-medium text-gray-500">
+                  <span className="font-extrabold text-gray-800 text-xs">Size</span>
+                  <span className="text-[11px] font-bold text-gray-500 w-fit whitespace-nowrap">
                     {baseDimensions
-                      ? `${baseDimensions.length} x ${baseDimensions.width} x ${baseDimensions.height} mm`
+                      ? `${baseDimensions.length}x${baseDimensions.width}x${baseDimensions.height}mm`
                       : "Loading..."}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Custom features button */}
-            <button
-              onClick={() => onProceed(selectedMaterial)}
-              className="w-full flex items-center justify-between p-3 rounded-xl border border-[#c05520] bg-orange-50/20 hover:bg-orange-50/50 transition-colors cursor-pointer shadow-sm"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-6.5 h-6.5 rounded-lg bg-white shadow-sm flex items-center justify-center border border-orange-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                  </svg>
-                </div>
-                <span className="font-bold text-[#c05520] text-xs">
-                  Custom Features
-                </span>
-              </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520] animate-bounce-right-loop">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-              </svg>
-            </button>
+
 
             {/* Pick & Paint */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-700">Pick &amp; Paint</label>
-              <div className="flex items-center gap-2 justify-start">
+            <div className={`flex ${!multiWindow ? 'items-center gap-3 shrink-0 border-l border-gray-150 pl-6' : 'flex flex-col gap-2'}`}>
+              <label className="text-xs font-extrabold text-gray-700 shrink-0">Paint</label>
+              <div className="flex items-center gap-2 justify-start shrink-0">
                 <button
                   onClick={() => {
                     if (onApplyColor) onApplyColor("all", null);
@@ -4761,7 +4791,7 @@ export default function EditorScreen1({
                     setColorBrushActive(false);
                   }}
                   title="Remove applied colors"
-                  className="w-7 h-7 rounded-lg border-2 border-red-200 bg-red-50/50 cursor-pointer flex items-center justify-center transition-all hover:scale-105"
+                  className="w-8 h-8 rounded-lg border border-red-200 bg-red-50/50 cursor-pointer flex items-center justify-center transition-all hover:scale-105"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#ef4444" className="w-3.5 h-3.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -4773,7 +4803,7 @@ export default function EditorScreen1({
                     setBrushColor("transparent");
                     setColorBrushActive(true);
                   }}
-                  className={`w-7 h-7 rounded-lg border-2 transition-all hover:scale-105 cursor-pointer ${colorBrushActive && brushColor === "transparent" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
+                  className={`w-8 h-8 rounded-lg border transition-all hover:scale-105 cursor-pointer ${colorBrushActive && brushColor === "transparent" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
                   style={{
                     background: "conic-gradient(#cbd5e1 25%, white 0 50%, #cbd5e1 0 75%, white 0)",
                     backgroundSize: "6px 6px",
@@ -4782,7 +4812,7 @@ export default function EditorScreen1({
                 />
 
                 <div
-                  className={`relative w-7 h-7 rounded-lg overflow-hidden cursor-pointer transition-all border-2 ${colorBrushActive && brushColor !== "transparent" && brushColor !== "__none__" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
+                  className={`relative w-8 h-8 rounded-lg overflow-hidden cursor-pointer transition-all border ${colorBrushActive && brushColor !== "transparent" && brushColor !== "__none__" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
                   style={{ background: brushColor === "__none__" ? "#f3f4f6" : brushColor }}
                   title="Pick custom color"
                 >
@@ -4796,14 +4826,14 @@ export default function EditorScreen1({
                     className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 opacity-0 cursor-pointer z-10"
                   />
                   {brushColor === "__none__" && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-pink-400 to-orange-400 opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-pink-400 to-indigo-400 opacity-80" />
                   )}
                 </div>
 
                 <button
                   onClick={() => {
                     if (!colorBrushActive && brushColor === "__none__") {
-                      setPickerMessage("Pick a color first!");
+                      setPickerMessage("Pick color!");
                       setFlashColorPicker(true);
                       setTimeout(() => { setPickerMessage(""); setFlashColorPicker(false); }, 3000);
                       return;
@@ -4811,77 +4841,136 @@ export default function EditorScreen1({
                     setColorBrushActive((v) => !v);
                     setPickerMessage("");
                   }}
-                  className={`flex items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${colorBrushActive ? "bg-[#c05520] text-white border-transparent" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}
+                  className={`flex items-center gap-1 py-1.5 px-3 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${colorBrushActive ? "bg-[#c05520] text-white border-transparent" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122A3 3 0 0012 21M9.53 16.122L12 11M9.53 16.122l1.688-1.688m.782 5.09a3 3 0 004.09-3.94l.82-1.025m-4.91 4.965l-.82 1.025M12 11l5-5" />
-                  </svg>
-                  {colorBrushActive ? "Brush On" : "Pick Color"}
+                  {colorBrushActive ? "On" : "Pick"}
                 </button>
               </div>
-              {pickerMessage && <span className="text-[10px] text-red-500 font-bold">{pickerMessage}</span>}
+              {pickerMessage && <span className="text-[10px] text-red-500 font-bold shrink-0">{pickerMessage}</span>}
             </div>
 
             {/* Metallic & Roughness sliders */}
-            <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+            <div className={`flex ${!multiWindow ? 'items-center gap-5 shrink-0 border-l border-gray-150 pl-6' : 'flex flex-col gap-2 pt-2 border-t border-gray-100'}`}>
               <DebouncedSlider
                 label="Metallic"
                 value={appliedMetallic?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.1}
                 onChange={(val) => onApplyMetallic && onApplyMetallic(selectedMaterial, val)}
+                compact={!multiWindow}
               />
               <DebouncedSlider
                 label="Roughness"
                 value={appliedRoughness?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.5}
                 onChange={(val) => onApplyRoughness && onApplyRoughness(selectedMaterial, val)}
+                compact={!multiWindow}
               />
             </div>
+            {!multiWindow && <div className="w-8 shrink-0" />}
+          </div>
+        </div>
+      </FloatingPopupWrapper>
 
-            {/* Texture library */}
-            <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-gray-700">Textures</span>
-                  <div className="relative">
-                    <button
-                      onClick={() => setIsTextureDropdownOpen(!isTextureDropdownOpen)}
-                      className="p-1 rounded bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 cursor-pointer flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                      </svg>
-                    </button>
-                    {isTextureDropdownOpen && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsTextureDropdownOpen(false)} />
-                        <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto py-1">
-                          {textureLibrary.map((category) => (
-                            <button
-                              key={category.category}
-                              onClick={() => {
-                                setActiveTextureCategory(category.category);
-                                setIsTextureDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-1.5 text-left text-[11px] font-semibold hover:bg-gray-50 transition-colors cursor-pointer ${activeTextureCategory === category.category ? "text-[#c05520] bg-orange-50/50" : "text-gray-700"}`}
-                            >
-                              {category.category}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
+      {/* Textures Popup Content */}
+      <FloatingPopupWrapper
+        tabId="textures"
+        isOpen={!!openTabs.textures}
+        isScaledUp={isScaledUp}
+        onClose={() => setActiveTab(null)}
+        zIndex={popupZIndices.textures}
+        onFocus={() => bringToFront("textures")}
+        pos={popupPositions.textures}
+        setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, textures: newPos }))}
+        initialHeight={370}
+        multiWindow={multiWindow}
+      >
+        <div className="flex flex-col gap-2.5 flex-1 h-full">
+          {/* Title & Close header */}
+          {multiWindow && (
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-[#c05520]/10 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#c05520" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.008 1.24l.885 1.77a2.25 2.25 0 002.007 1.24h1.98a2.25 2.25 0 002.007-1.24l.885-1.77a2.25 2.25 0 012.007-1.24h3.86m-18 0h18" />
+                  </svg>
                 </div>
-                {!!(appliedMaterials?.[selectedMaterial || "all"] || appliedMaterials?.["all"]) && (
+                <span className="text-sm font-bold text-gray-900">Textures</span>
+              </div>
+              <button
+                onClick={() => setActiveTab(null)}
+                className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          <div className={!multiWindow ? "flex-1 overflow-x-auto no-scrollbar py-1 flex items-center gap-6 min-w-0" : "flex-1 overflow-y-auto pr-1 pb-6 flex flex-col gap-4"}>
+            
+            {/* Texture Category Selector */}
+            <div className={`flex shrink-0 ${!multiWindow ? 'items-center gap-3.5' : 'flex-col gap-2'}`}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-extrabold text-gray-700">Category:</span>
+                <select
+                  value={activeTextureCategory}
+                  onChange={(e) => setActiveTextureCategory(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-bold text-gray-700 cursor-pointer outline-none transition-colors"
+                >
+                  {textureLibrary.map((category) => (
+                    <option key={category.category} value={category.category}>
+                      {category.category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Custom file upload texture button */}
+            <div className={`flex shrink-0 ${!multiWindow ? 'items-center border-l border-gray-150 pl-6' : 'pt-2 border-t border-gray-100'}`}>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 hover:border-[#c05520]/60 rounded-xl hover:bg-orange-50/10 cursor-pointer w-28 h-14 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-gray-500 mb-0.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span className="text-[10px] font-bold text-gray-600">Custom Upload</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCustomTextureUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {/* Predefined textures list with scroll arrow navigation and start-aligned Remove button */}
+            <div className="flex-1 border-l border-gray-150 pl-4 flex items-center min-w-0 gap-1.5">
+              {!multiWindow && (
+                <button
+                  onClick={() => textureScrollRef.current?.scrollBy({ left: -140, behavior: 'smooth' })}
+                  className="z-25 p-1 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-[#c05520] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center w-6 h-6 shrink-0"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+              )}
+
+              <div
+                ref={textureScrollRef}
+                className={`flex-1 overflow-x-auto no-scrollbar scroll-smooth ${!multiWindow ? "flex items-center gap-2.5 shrink-0" : "grid grid-cols-4 gap-3 max-h-[160px] overflow-y-auto pr-1"}`}
+              >
+                {/* Remove Texture inline button before the first predefined texture */}
+                {!!(appliedMaterials?.[selectedMaterial || "all"] || appliedMaterials?.["all"] || appliedTextures?.[selectedMaterial || "all"] || appliedTextures?.["all"]) && (
                   <button
                     onClick={() => onApplyMaterial && onApplyMaterial(selectedMaterial, null)}
-                    className="text-[10px] text-gray-500 hover:text-red-600 transition-colors cursor-pointer font-bold"
+                    className="relative rounded-xl border-2 border-dashed border-red-200 hover:border-red-400 bg-red-50/20 hover:bg-red-50/60 transition-colors flex items-center justify-center shrink-0 w-11 h-11 cursor-pointer"
+                    title="Remove applied texture"
                   >
-                    Clear
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#ef4444" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
                   </button>
                 )}
-              </div>
 
-              <div className="grid grid-cols-4 gap-3 max-h-[160px] overflow-y-auto pr-1">
                 {textureLibrary
                   .find((c) => c.category === activeTextureCategory)
                   ?.textures.map((texture) => (
@@ -4897,16 +4986,27 @@ export default function EditorScreen1({
                           setTimeout(() => setIsModelLoading(false), 800);
                         }, 50);
                       }}
-                      className={`relative rounded-lg border-2 overflow-hidden aspect-square flex items-center justify-center transition-all ${appliedMaterials?.[selectedMaterial || "all"]?.id === texture.id ? "border-[#c05520]" : "border-transparent"}`}
+                      className={`relative rounded-xl border-2 overflow-hidden shrink-0 flex items-center justify-center transition-all ${appliedMaterials?.[selectedMaterial || "all"]?.id === texture.id ? "border-[#c05520]" : "border-transparent"} ${!multiWindow ? 'w-11 h-11' : 'aspect-square'}`}
                     >
                       {texture.preview ? (
                         <img src={texture.preview} alt={texture.name} className="absolute inset-0 w-full h-full object-cover" />
                       ) : (
-                        <div className="text-[8px] text-gray-400 p-0.5">{texture.name}</div>
+                        <div className="text-[9px] text-gray-400 p-0.5">{texture.name}</div>
                       )}
                     </button>
                   ))}
               </div>
+
+              {!multiWindow && (
+                <button
+                  onClick={() => textureScrollRef.current?.scrollBy({ left: 140, behavior: 'smooth' })}
+                  className="z-25 p-1 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-[#c05520] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center w-6 h-6 shrink-0"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -6095,6 +6195,7 @@ export default function EditorScreen1({
                       pendingSceneObject.name = copyName;
                       parsed.push(pendingSceneObject);
                       localStorage.setItem("fisto_saved_scenes", JSON.stringify(parsed));
+                      window.dispatchEvent(new CustomEvent("fisto_scene_saved"));
                       setSaveSceneName("");
                       setShowSaveModal(false);
                       setPendingSceneObject(null);

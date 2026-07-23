@@ -92,6 +92,7 @@ export default function EditorPage() {
     models: false,
     layout: false,
     edit: true,
+    textures: false,
     scene: false,
     gallery: false,
   });
@@ -106,6 +107,7 @@ export default function EditorPage() {
           models: false,
           layout: false,
           edit: false,
+          textures: false,
           scene: false,
           gallery: false,
         });
@@ -124,6 +126,7 @@ export default function EditorPage() {
         models: tab === "models",
         layout: tab === "layout",
         edit: tab === "edit",
+        textures: tab === "textures",
         scene: tab === "scene",
         gallery: tab === "gallery",
       });
@@ -609,7 +612,6 @@ export default function EditorPage() {
       const nextLastApplied = { ...splitPrev.lastApplied };
 
       if (targetMat === "all") {
-        // Write to the "all" key so every mesh in the traversal picks it up
         if (materialType === null) {
           delete nextMaterials["all"];
           delete nextLastApplied["all"];
@@ -617,6 +619,28 @@ export default function EditorPage() {
           delete nextLastApplied["Lid Label"];
           delete nextMaterials["Body Label"];
           delete nextLastApplied["Body Label"];
+          delete nextTextures["all"];
+          delete nextTextures["Lid Label"];
+          delete nextTextures["Body Label"];
+          delete nextLastApplied["Lid Label"];
+          delete nextLastApplied["Body Label"];
+        } else if (materialType.isCustom || materialType.url) {
+          nextTextures["all"] = materialType.url || materialType;
+          nextLastApplied["all"] = "texture";
+          delete nextColors["all"];
+          delete nextMaterials["all"];
+          Object.keys(nextColors).forEach((key) => {
+            if (key !== "all") delete nextColors[key];
+          });
+          Object.keys(nextTextures).forEach((key) => {
+            if (key !== "all") delete nextTextures[key];
+          });
+          Object.keys(nextMaterials).forEach((key) => {
+            if (key !== "all") delete nextMaterials[key];
+          });
+          Object.keys(nextLastApplied).forEach((key) => {
+            if (key !== "all") delete nextLastApplied[key];
+          });
         } else {
           nextMaterials["all"] = materialType;
           nextLastApplied["all"] = "material";
@@ -624,7 +648,6 @@ export default function EditorPage() {
           if (!isWearableModel) {
             delete nextTextures["all"];
           }
-          // Clear all per-material color/material/texture overrides so they don't block the new global material
           Object.keys(nextColors).forEach((key) => {
             if (key !== "all") delete nextColors[key];
           });
@@ -643,7 +666,13 @@ export default function EditorPage() {
       } else {
         if (materialType === null) {
           delete nextMaterials[targetMat];
+          delete nextTextures[targetMat];
           delete nextLastApplied[targetMat];
+        } else if (materialType.isCustom || materialType.url) {
+          nextTextures[targetMat] = materialType.url || materialType;
+          nextLastApplied[targetMat] = "texture";
+          delete nextColors[targetMat];
+          delete nextMaterials[targetMat];
         } else {
           nextMaterials[targetMat] = materialType;
           nextLastApplied[targetMat] = "material";

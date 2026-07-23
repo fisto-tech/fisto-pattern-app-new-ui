@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 import { MODELS } from "./ModelsPopup";
 
-export default function GalleryPopup({ onLoadScene, isScaledUp, onToggleScale, onClose }) {
+export default function GalleryPopup({ onLoadScene, isScaledUp, onToggleScale, onClose, isHorizontal = false }) {
   const [scenes, setScenes] = useState([]);
 
   useEffect(() => {
     loadSavedScenes();
+
+    const handleSceneSaved = () => {
+      loadSavedScenes();
+    };
+
+    window.addEventListener("fisto_scene_saved", handleSceneSaved);
+    return () => {
+      window.removeEventListener("fisto_scene_saved", handleSceneSaved);
+    };
   }, []);
 
   const loadSavedScenes = () => {
@@ -62,89 +71,72 @@ export default function GalleryPopup({ onLoadScene, isScaledUp, onToggleScale, o
   };
 
   return (
-    <div className="w-full h-full bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-gray-100/80 p-5 flex flex-col overflow-hidden z-20 transition-all duration-300">
+    <div className={`w-full h-fit shrink-0 flex flex-col overflow-hidden z-20 transition-all duration-300 ${isHorizontal ? 'bg-transparent border-none shadow-none p-0' : 'bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-gray-100/80 p-5'}`}>
       {/* Header */}
-      <div className="mb-4 shrink-0 pb-3 border-b border-gray-100 flex items-center justify-between">
+      <div className={`shrink-0 flex items-center justify-between ${isHorizontal ? 'border-b-0 p-0 mb-2' : 'mb-4 pb-3 border-b border-gray-100'}`}>
         <div>
-          <h2 className="text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2 m-0">
+          <h2 className="text-xs font-bold text-gray-900 tracking-tight flex items-center gap-2 m-0">
             <span>Saved Gallery</span>
-            <span className="text-xs bg-[#c05520]/10 text-[#c05520] px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[10px] bg-[#c05520]/10 text-[#c05520] px-1.5 py-0.2 rounded-full font-bold">
               {scenes.length}
             </span>
           </h2>
         </div>
-        <div className="flex items-center gap-1.5">
-          {onToggleScale && (
-            <button
-              onClick={onToggleScale}
-              className="p-1.5 rounded-lg bg-gray-100 hover:bg-orange-50 text-gray-500 hover:text-[#c05520] transition-colors border-none cursor-pointer"
-              title={isScaledUp ? "Scale Down" : "Scale Up (Enlarge)"}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-4 h-4"
+        {!isHorizontal && (
+          <div className="flex items-center gap-1.5">
+            {onToggleScale && (
+              <button
+                onClick={onToggleScale}
+                className="p-1.5 rounded-lg bg-gray-100 hover:bg-orange-50 text-gray-500 hover:text-[#c05520] transition-colors border-none cursor-pointer"
+                title={isScaledUp ? "Scale Down" : "Scale Up (Enlarge)"}
               >
-                {isScaledUp ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 9L4.5 4.5m0 0H9m-4.5 0V9m10.5 6l4.5 4.5m0 0H15m4.5 0v-4.5"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15m-11.25 5.25h4.5m-4.5 0v-4.5m0 4.5L9 15"
-                  />
-                )}
-              </svg>
-            </button>
-          )}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
-              title="Close"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-4 h-4"
+                >
+                  {isScaledUp ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 9L4.5 4.5m0 0H9m-4.5 0V9m10.5 6l4.5 4.5m0 0H15m4.5 0v-4.5"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15m-11.25 5.25h4.5m-4.5 0v-4.5m0 4.5L9 15"
+                    />
+                  )}
+                </svg>
+              </button>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
+                title="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Scrollable List container */}
-      <div className="flex-1 overflow-y-auto rounded-xl pr-1">
+      <div className={isHorizontal ? "overflow-x-auto no-scrollbar flex-1 py-1" : "flex-1 overflow-y-auto rounded-xl pr-1"}>
         {scenes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full">
-            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4 text-[#9f9891]">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-8 h-8"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                />
-              </svg>
-            </div>
-            <h3 className="font-bold text-gray-700 text-sm">No Saved Scenes</h3>
-            <p className="text-xs text-gray-400 mt-1 max-w-[200px] leading-relaxed">
-              Use the Save button at the top right to store your current designs.
-            </p>
+          <div className="text-center text-gray-400 py-4 text-xs">
+            No Saved Scenes
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4.5 pb-4">
+          <div className={isHorizontal ? "flex items-center gap-3" : "grid grid-cols-1 gap-4.5 pb-4"}>
             {scenes.map((scene) => {
               const thumbnail = getModelThumbnail(scene.modelUrl);
               const modelName = getModelName(scene.modelUrl);
@@ -152,38 +144,40 @@ export default function GalleryPopup({ onLoadScene, isScaledUp, onToggleScale, o
                 <div
                   key={scene.id}
                   onClick={() => onLoadScene(scene)}
-                  className="group relative flex items-center gap-4 p-3 bg-gray-50/70 hover:bg-gray-50 border border-gray-100 hover:border-[#c05520]/25 rounded-2xl cursor-pointer transition-all duration-200"
+                  className={`group relative flex items-center gap-2.5 border border-gray-100 hover:border-[#c05520]/25 rounded-xl cursor-pointer transition-all duration-200 shrink-0 ${isHorizontal ? 'p-1.5 pr-2.5 bg-gray-50/50 w-44' : 'p-3 bg-gray-50/70 hover:bg-gray-50'}`}
                 >
                   {/* Thumbnail */}
-                  <div className="w-16 h-16 rounded-xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 relative shadow-sm">
+                  <div className={`rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 relative shadow-sm ${isHorizontal ? 'w-10 h-10' : 'w-16 h-16'}`}>
                     {thumbnail ? (
                       <img
                         src={thumbnail}
                         alt={modelName}
-                        className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-200"
+                        className="w-full h-full object-contain p-0.5 group-hover:scale-110 transition-transform duration-200"
                       />
                     ) : (
-                      <span className="text-[20px]">📦</span>
+                      <span className="text-[14px]">📦</span>
                     )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0 pr-4">
-                    <h4 className="font-bold text-gray-800 text-sm truncate group-hover:text-[#c05520] transition-colors">
+                    <h4 className="font-bold text-gray-800 text-xs truncate group-hover:text-[#c05520] transition-colors">
                       {scene.name}
                     </h4>
-                    <p className="text-[10px] text-[#c05520] font-bold tracking-wider uppercase mt-0.5 truncate">
+                    <p className="text-[9px] text-[#c05520] font-bold mt-0.5 truncate uppercase tracking-wide">
                       {modelName}
                     </p>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      {formatDate(scene.createdAt)}
-                    </p>
+                    {!isHorizontal && (
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {formatDate(scene.createdAt)}
+                      </p>
+                    )}
                   </div>
 
                   {/* Delete Button */}
                   <button
                     onClick={(e) => handleDeleteScene(scene.id, e)}
-                    className="w-8 h-8 rounded-full bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 border border-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-150 absolute right-3 top-1/2 -translate-y-1/2 shadow-sm"
+                    className={`rounded-full bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 border border-gray-100 flex items-center justify-center transition-all duration-150 absolute right-2 top-1/2 -translate-y-1/2 shadow-sm ${isHorizontal ? 'w-6 h-6 opacity-100' : 'w-8 h-8 opacity-0 group-hover:opacity-100'}`}
                     title="Delete Saved Scene"
                   >
                     <svg
@@ -192,7 +186,7 @@ export default function GalleryPopup({ onLoadScene, isScaledUp, onToggleScale, o
                       viewBox="0 0 24 24"
                       strokeWidth={1.8}
                       stroke="currentColor"
-                      className="w-4 h-4"
+                      className="w-3 h-3"
                     >
                       <path
                         strokeLinecap="round"

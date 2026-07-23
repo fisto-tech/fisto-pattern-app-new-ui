@@ -2,26 +2,6 @@ import React from "react";
 
 const bottomNavItems = [
   {
-    id: "models",
-    label: "Models",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.8}
-        stroke="currentColor"
-        className="w-5 h-5"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"
-        />
-      </svg>
-    ),
-  },
-  {
     id: "layout",
     label: "Layouts",
     icon: (
@@ -43,7 +23,7 @@ const bottomNavItems = [
   },
   {
     id: "edit",
-    label: "Features",
+    label: "Edit",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -62,6 +42,31 @@ const bottomNavItems = [
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: "textures",
+    label: "Textures",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.8}
+        stroke="currentColor"
+        className="w-5 h-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2.25 13.5h3.86a2.25 2.25 0 012.008 1.24l.885 1.77a2.25 2.25 0 002.007 1.24h1.98a2.25 2.25 0 002.007-1.24l.885-1.77a2.25 2.25 0 012.007-1.24h3.86m-18 0h18"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2.25 13.5v-6a2.25 2.25 0 012.25-2.25h15a2.25 2.25 0 012.25 2.25v6m-19.5 0A2.25 2.25 0 004.5 15.75h15a2.25 2.25 0 002.25-2.25"
         />
       </svg>
     ),
@@ -140,8 +145,8 @@ export default function BottomBar({
   openTabs = {},
 }) {
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 max-w-[95vw] overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
-      <div className="flex items-center gap-1">
+    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 max-w-[95vw] overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)] no-scrollbar">
+      <div className="flex items-center gap-1 shrink-0">
         {bottomNavItems.map((item) => {
           const isActive = multiWindow ? !!openTabs[item.id] : activeTab === item.id;
           return (
