@@ -116,6 +116,71 @@ import blockIcon from "../../assets/images/Editor 1/Icons/block.webp";
 import cursorIcon from "../../assets/images/Icons/cursor.webp";
 import handIcon from "../../assets/images/Icons/hand.webp";
 
+// ---- Draggable floating popup window wrapper ----
+function FloatingPopupWrapper({
+  tabId,
+  isOpen,
+  isScaledUp,
+  onClose,
+  zIndex,
+  onFocus,
+  initialWidth = 380,
+  initialHeight = 340,
+  pos,
+  setPos,
+  children,
+}) {
+  const dragRef = useRef({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
+
+  const handleDragStart = (e) => {
+    onFocus();
+    dragRef.current = { dragging: true, startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const handleDragMove = (e) => {
+    if (!dragRef.current.dragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPos({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
+  };
+  const handleDragEnd = (e) => {
+    dragRef.current.dragging = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      onPointerDown={onFocus}
+      className="fixed bg-white rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.14)] border border-gray-150 flex flex-col pointer-events-auto transition-shadow duration-200 select-none"
+      style={{
+        width: isScaledUp ? "640px" : `${initialWidth}px`,
+        height: isScaledUp ? "400px" : `${initialHeight}px`,
+        top: "50%",
+        left: "50%",
+        transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`,
+        zIndex,
+      }}
+    >
+      {/* Top drag handle strip */}
+      <div
+        className="w-full h-7 flex items-center justify-center cursor-grab active:cursor-grabbing bg-gray-50/50 border-b border-gray-100 rounded-t-[24px] shrink-0"
+        onPointerDown={handleDragStart}
+        onPointerMove={handleDragMove}
+        onPointerUp={handleDragEnd}
+        style={{ touchAction: "none" }}
+      >
+        <div className="w-12 h-1 rounded-full bg-gray-300" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 min-h-0 select-text">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ---- Loading overlay (outside canvas, driven by state or drei's useProgress) ----
 function ModelLoadingOverlay({ isLoading }) {
   const { progress } = useProgress();
@@ -2995,6 +3060,9 @@ export default function EditorScreen1({
   onSelectCap,
   uvEditsApplied,
   onClearUvEdits,
+  multiWindow = false,
+  setMultiWindow,
+  openTabs = {},
 }) {
   const isBottleModel = useMemo(() => {
     if (!modelUrl) return false;
@@ -3028,6 +3096,30 @@ export default function EditorScreen1({
     return !MODELS.some((m) => m.modelUrl === modelUrl);
   }, [modelUrl]);
   const [showTools, setShowTools] = useState(false);
+  
+  // Floating Popups state (spread to the sides to keep the center 3D model fully visible)
+  const [popupPositions, setPopupPositions] = useState({
+    models: { x: -380, y: -80 },
+    layout: { x: -380, y: 120 },
+    edit: { x: 380, y: -80 },
+    scene: { x: 380, y: 120 },
+    gallery: { x: 0, y: -150 },
+  });
+
+  const [popupZIndices, setPopupZIndices] = useState({
+    models: 30,
+    layout: 30,
+    edit: 30,
+    scene: 30,
+    gallery: 30,
+  });
+
+  const bringToFront = (tab) => {
+    setPopupZIndices((prev) => {
+      const maxZ = Math.max(...Object.values(prev));
+      return { ...prev, [tab]: maxZ + 1 };
+    });
+  };
   const [isLidOpen, setIsLidOpen] = useState(false);
   const [capPanelPosition, setCapPanelPosition] = useState({ x: 0, y: 0 });
   const [isCapPanelMinimized, setIsCapPanelMinimized] = useState(false);
@@ -4464,333 +4556,364 @@ export default function EditorScreen1({
         </div>
       </div>
 
-      {/* Popups Bottom Drawer Container (Centered above bottom navigation bar) */}
-      <div className="editor-popups-container fixed bottom-24 left-1/2 -translate-x-1/2 z-30 flex pointer-events-none max-w-[95vw]">
-        <div
-          className={`transition-all duration-300 ease-out overflow-hidden shrink-0 pointer-events-auto bg-white rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.12)] border border-gray-150 flex flex-col ${
-            activeTab && activeTab !== "uv_editor"
-              ? isScaledUp
-                ? "w-[640px] h-[400px] p-5 opacity-100 translate-y-0 scale-100"
-                : activeTab === "edit"
-                  ? "w-[380px] h-[370px] p-5 opacity-100 translate-y-0 scale-100"
-                  : "w-[380px] h-[340px] p-5 opacity-100 translate-y-0 scale-100"
-              : "w-[380px] h-[340px] p-0 opacity-0 translate-y-8 scale-95 pointer-events-none border-none shadow-none"
-          }`}
-        >
-          <div className="flex-1 overflow-y-auto flex flex-col gap-4 min-h-0">
-            {activeTab === "models" && (
-              <ModelsPopup
-                onSelectModel={(url) => {
-                  if (url === modelUrl) return;
-                  if (onResetAll) onResetAll();
-                  setIsLidOpen(false);
-                  if (onSelectCap) onSelectCap("none");
-                  if (orbitControlsRef.current) {
-                    orbitControlsRef.current.reset();
-                    orbitControlsRef.current.setAzimuthalAngle(0);
-                    orbitControlsRef.current.setPolarAngle(Math.PI / 2);
-                    orbitControlsRef.current.target.set(0, getModelCenterY(), 0);
-                    orbitControlsRef.current.update();
-                  }
-                  setModelUrl(url);
-                }}
-                currentModelUrl={modelUrl}
-                isScaledUp={isScaledUp}
-                onToggleScale={() => setIsScaledUp((s) => !s)}
-                onClose={() => setActiveTab(null)}
-              />
-            )}
-            {activeTab === "layout" && (
-              <LayoutPopup
-                currentModelUrl={modelUrl}
-                selectedCapUrl={selectedCapUrl}
-                currentCapOffsets={currentCapOffsets}
-                updateCapOffset={updateCapOffset}
-                updateCapUniformScale={updateCapUniformScale}
-                onSaveCapConfig={saveCapConfig}
-                isLayoutSelected={!MODELS.some((m) => m.modelUrl === modelUrl)}
-                onSelectLayout={(url) => {
-                  if (url === modelUrl) {
-                    const singleModelUrl = getSingleModelUrl(modelUrl);
-                    setModelUrl(singleModelUrl);
-                    return;
-                  }
-                  setModelUrl(url);
-                }}
-                isScaledUp={isScaledUp}
-                onToggleScale={() => setIsScaledUp((s) => !s)}
-                onClose={() => setActiveTab(null)}
-              />
-            )}
-            {activeTab === "scene" && (
-              <ScenePopup
-                bgColor={bgColor}
-                setBgColor={setBgColor}
-                hdriPreset={hdriPreset}
-                setHdriPreset={setHdriPreset}
-                envIntensity={envIntensity}
-                setEnvIntensity={setEnvIntensity}
-                ambLight={ambLight}
-                setAmbLight={setAmbLight}
-                dirLight={dirLight}
-                setDirLight={setDirLight}
-                shadowOpacity={shadowOpacity}
-                setShadowOpacity={setShadowOpacity}
-                customHdri={customHdri}
-                setCustomHdri={setCustomHdri}
-                bgImage={bgImage}
-                setBgImage={setBgImage}
-                isScaledUp={isScaledUp}
-                onToggleScale={() => setIsScaledUp((s) => !s)}
-                onClose={() => setActiveTab(null)}
-              />
-            )}
-            {activeTab === "gallery" && (
-              <GalleryPopup
-                onLoadScene={(scene) => {
-                  onLoadScene(scene);
-                  setActiveTab(null);
-                }}
-                isScaledUp={isScaledUp}
-                onToggleScale={() => setIsScaledUp((s) => !s)}
-                onClose={() => setActiveTab(null)}
-              />
-            )}
+      {/* Draggable Floating Popups Container */}
+      <FloatingPopupWrapper
+        tabId="models"
+        isOpen={!!openTabs.models}
+        isScaledUp={isScaledUp}
+        onClose={() => setActiveTab(null)}
+        zIndex={popupZIndices.models}
+        onFocus={() => bringToFront("models")}
+        pos={popupPositions.models}
+        setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, models: newPos }))}
+      >
+        <ModelsPopup
+          onSelectModel={(url) => {
+            if (url === modelUrl) return;
+            if (onResetAll) onResetAll();
+            setIsLidOpen(false);
+            if (onSelectCap) onSelectCap("none");
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.reset();
+              orbitControlsRef.current.setAzimuthalAngle(0);
+              orbitControlsRef.current.setPolarAngle(Math.PI / 2);
+              orbitControlsRef.current.target.set(0, getModelCenterY(), 0);
+              orbitControlsRef.current.update();
+            }
+            setModelUrl(url);
+          }}
+          currentModelUrl={modelUrl}
+          isScaledUp={isScaledUp}
+          onToggleScale={() => setIsScaledUp((s) => !s)}
+          onClose={() => setActiveTab(null)}
+        />
+      </FloatingPopupWrapper>
 
-            {/* Features (Edit) Popup Content wrapped inside bottom-sheet */}
-            {activeTab === "edit" && !showCustomSize && (
-              <div className="flex flex-col gap-4 flex-1 h-full">
-                {/* Title & Close header */}
-                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-[#c05520]/10 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#c05520" className="w-3.5 h-3.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 0 0 3.94 4.092l3.4-1.7a3 3 0 0 0 1.34-1.34l1.7-3.4a3 3 0 0 0-.843-3.666l-1.025-.82a3 3 0 0 0-3.666-.843l-3.4 1.7a3 3 0 0 0-1.34 1.34l-1.7 3.4Z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                      </svg>
-                    </div>
-                    <span className="text-sm font-bold text-gray-900">Features</span>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab(null)}
-                    className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+      <FloatingPopupWrapper
+        tabId="layout"
+        isOpen={!!openTabs.layout}
+        isScaledUp={isScaledUp}
+        onClose={() => setActiveTab(null)}
+        zIndex={popupZIndices.layout}
+        onFocus={() => bringToFront("layout")}
+        pos={popupPositions.layout}
+        setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, layout: newPos }))}
+      >
+        <LayoutPopup
+          currentModelUrl={modelUrl}
+          selectedCapUrl={selectedCapUrl}
+          currentCapOffsets={currentCapOffsets}
+          updateCapOffset={updateCapOffset}
+          updateCapUniformScale={updateCapUniformScale}
+          onSaveCapConfig={saveCapConfig}
+          isLayoutSelected={!MODELS.some((m) => m.modelUrl === modelUrl)}
+          onSelectLayout={(url) => {
+            if (url === modelUrl) {
+              const singleModelUrl = getSingleModelUrl(modelUrl);
+              setModelUrl(singleModelUrl);
+              return;
+            }
+            setModelUrl(url);
+          }}
+          isScaledUp={isScaledUp}
+          onToggleScale={() => setIsScaledUp((s) => !s)}
+          onClose={() => setActiveTab(null)}
+        />
+      </FloatingPopupWrapper>
+
+      <FloatingPopupWrapper
+        tabId="scene"
+        isOpen={!!openTabs.scene}
+        isScaledUp={isScaledUp}
+        onClose={() => setActiveTab(null)}
+        zIndex={popupZIndices.scene}
+        onFocus={() => bringToFront("scene")}
+        pos={popupPositions.scene}
+        setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, scene: newPos }))}
+      >
+        <ScenePopup
+          bgColor={bgColor}
+          setBgColor={setBgColor}
+          hdriPreset={hdriPreset}
+          setHdriPreset={setHdriPreset}
+          envIntensity={envIntensity}
+          setEnvIntensity={setEnvIntensity}
+          ambLight={ambLight}
+          setAmbLight={setAmbLight}
+          dirLight={dirLight}
+          setDirLight={setDirLight}
+          shadowOpacity={shadowOpacity}
+          setShadowOpacity={setShadowOpacity}
+          customHdri={customHdri}
+          setCustomHdri={setCustomHdri}
+          bgImage={bgImage}
+          setBgImage={setBgImage}
+          isScaledUp={isScaledUp}
+          onToggleScale={() => setIsScaledUp((s) => !s)}
+          onClose={() => setActiveTab(null)}
+        />
+      </FloatingPopupWrapper>
+
+      <FloatingPopupWrapper
+        tabId="gallery"
+        isOpen={!!openTabs.gallery}
+        isScaledUp={isScaledUp}
+        onClose={() => setActiveTab(null)}
+        zIndex={popupZIndices.gallery}
+        onFocus={() => bringToFront("gallery")}
+        pos={popupPositions.gallery}
+        setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, gallery: newPos }))}
+      >
+        <GalleryPopup
+          onLoadScene={(scene) => {
+            onLoadScene(scene);
+            setActiveTab(null);
+          }}
+          isScaledUp={isScaledUp}
+          onToggleScale={() => setIsScaledUp((s) => !s)}
+          onClose={() => setActiveTab(null)}
+        />
+      </FloatingPopupWrapper>
+
+      {/* Features (Edit) Popup Content wrapped inside draggable floating window */}
+      <FloatingPopupWrapper
+        tabId="edit"
+        isOpen={!!openTabs.edit && !showCustomSize}
+        isScaledUp={isScaledUp}
+        onClose={() => setActiveTab(null)}
+        zIndex={popupZIndices.edit}
+        onFocus={() => bringToFront("edit")}
+        pos={popupPositions.edit}
+        setPos={(newPos) => setPopupPositions((prev) => ({ ...prev, edit: newPos }))}
+        initialHeight={370}
+      >
+        <div className="flex flex-col gap-4 flex-1 h-full">
+          {/* Title & Close header */}
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-[#c05520]/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#c05520" className="w-3.5 h-3.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 0 0 3.94 4.092l3.4-1.7a3 3 0 0 0 1.34-1.34l1.7-3.4a3 3 0 0 0-.843-3.666l-1.025-.82a3 3 0 0 0-3.666-.843l-3.4 1.7a3 3 0 0 0-1.34 1.34l-1.7 3.4Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                </svg>
+              </div>
+              <span className="text-sm font-bold text-gray-900">Features</span>
+            </div>
+            <button
+              onClick={() => setActiveTab(null)}
+              className="p-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 border-none cursor-pointer transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-1 pb-6 flex flex-col gap-4">
+            {/* Size block */}
+            <div className="w-full flex items-center justify-between p-3 rounded-2xl border border-gray-100 bg-gray-50/70">
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-600">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15m0 0v1.5m0-1.5v-1.5m15 1.5v1.5m0-1.5v-1.5m-12 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18h12a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3Z" />
+                  </svg>
                 </div>
-
-                <div className="flex-1 overflow-y-auto pr-1 pb-6 flex flex-col gap-4">
-                  {/* Size block */}
-                  <div className="w-full flex items-center justify-between p-3 rounded-2xl border border-gray-100 bg-gray-50/70">
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-600">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15m0 0v1.5m0-1.5v-1.5m15 1.5v1.5m0-1.5v-1.5m-12 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18h12a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3Z" />
-                        </svg>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-gray-800 text-xs">Size</span>
-                        <span className="text-[10px] font-medium text-gray-500">
-                          {baseDimensions
-                            ? `${baseDimensions.length} x ${baseDimensions.width} x ${baseDimensions.height} mm`
-                            : "Loading..."}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Custom features button */}
-                  <button
-                    onClick={() => onProceed(selectedMaterial)}
-                    className="w-full flex items-center justify-between p-3 rounded-xl border border-[#c05520] bg-orange-50/20 hover:bg-orange-50/50 transition-colors cursor-pointer shadow-sm"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-6.5 h-6.5 rounded-lg bg-white shadow-sm flex items-center justify-center border border-orange-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520]">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                        </svg>
-                      </div>
-                      <span className="font-bold text-[#c05520] text-xs">
-                        Custom Features
-                      </span>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520] animate-bounce-right-loop">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </button>
-
-                  {/* Pick & Paint */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-gray-700">Pick &amp; Paint</label>
-                    <div className="flex items-center gap-2 justify-start">
-                      <button
-                        onClick={() => {
-                          if (onApplyColor) onApplyColor("all", null);
-                          setBrushColor("__none__");
-                          setColorBrushActive(false);
-                        }}
-                        title="Remove applied colors"
-                        className="w-7 h-7 rounded-lg border-2 border-red-200 bg-red-50/50 cursor-pointer flex items-center justify-center transition-all hover:scale-105"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#ef4444" className="w-3.5 h-3.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setBrushColor("transparent");
-                          setColorBrushActive(true);
-                        }}
-                        className={`w-7 h-7 rounded-lg border-2 transition-all hover:scale-105 cursor-pointer ${colorBrushActive && brushColor === "transparent" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
-                        style={{
-                          background: "conic-gradient(#cbd5e1 25%, white 0 50%, #cbd5e1 0 75%, white 0)",
-                          backgroundSize: "6px 6px",
-                        }}
-                        title="Paint transparent"
-                      />
-
-                      <div
-                        className={`relative w-7 h-7 rounded-lg overflow-hidden cursor-pointer transition-all border-2 ${colorBrushActive && brushColor !== "transparent" && brushColor !== "__none__" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
-                        style={{ background: brushColor === "__none__" ? "#f3f4f6" : brushColor }}
-                        title="Pick custom color"
-                      >
-                        <input
-                          type="color"
-                          value={brushColor === "__none__" ? "#3b82f6" : brushColor}
-                          onChange={(e) => {
-                            setBrushColor(e.target.value);
-                            setColorBrushActive(true);
-                          }}
-                          className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 opacity-0 cursor-pointer z-10"
-                        />
-                        {brushColor === "__none__" && (
-                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-pink-400 to-orange-400 opacity-80" />
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          if (!colorBrushActive && brushColor === "__none__") {
-                            setPickerMessage("Pick a color first!");
-                            setFlashColorPicker(true);
-                            setTimeout(() => { setPickerMessage(""); setFlashColorPicker(false); }, 3000);
-                            return;
-                          }
-                          setColorBrushActive((v) => !v);
-                          setPickerMessage("");
-                        }}
-                        className={`flex items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${colorBrushActive ? "bg-[#c05520] text-white border-transparent" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122A3 3 0 0012 21M9.53 16.122L12 11M9.53 16.122l1.688-1.688m.782 5.09a3 3 0 004.09-3.94l.82-1.025m-4.91 4.965l-.82 1.025M12 11l5-5" />
-                        </svg>
-                        {colorBrushActive ? "Brush On" : "Pick Color"}
-                      </button>
-                    </div>
-                    {pickerMessage && <span className="text-[10px] text-red-500 font-bold">{pickerMessage}</span>}
-                  </div>
-
-                  {/* Metallic & Roughness sliders */}
-                  <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
-                    <DebouncedSlider
-                      label="Metallic"
-                      value={appliedMetallic?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.1}
-                      onChange={(val) => onApplyMetallic && onApplyMetallic(selectedMaterial, val)}
-                    />
-                    <DebouncedSlider
-                      label="Roughness"
-                      value={appliedRoughness?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.5}
-                      onChange={(val) => onApplyRoughness && onApplyRoughness(selectedMaterial, val)}
-                    />
-                  </div>
-
-                  {/* Texture library */}
-                  <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-gray-700">Textures</span>
-                        <div className="relative">
-                          <button
-                            onClick={() => setIsTextureDropdownOpen(!isTextureDropdownOpen)}
-                            className="p-1 rounded bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 cursor-pointer flex items-center"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                            </svg>
-                          </button>
-                          {isTextureDropdownOpen && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setIsTextureDropdownOpen(false)} />
-                              <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto py-1">
-                                {textureLibrary.map((category) => (
-                                  <button
-                                    key={category.category}
-                                    onClick={() => {
-                                      setActiveTextureCategory(category.category);
-                                      setIsTextureDropdownOpen(false);
-                                    }}
-                                    className={`w-full px-3 py-1.5 text-left text-[11px] font-semibold hover:bg-gray-50 transition-colors cursor-pointer ${activeTextureCategory === category.category ? "text-[#c05520] bg-orange-50/50" : "text-gray-700"}`}
-                                  >
-                                    {category.category}
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      {!!(appliedMaterials?.[selectedMaterial || "all"] || appliedMaterials?.["all"]) && (
-                        <button
-                          onClick={() => onApplyMaterial && onApplyMaterial(selectedMaterial, null)}
-                          className="text-[10px] text-gray-500 hover:text-red-600 transition-colors cursor-pointer font-bold"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-3 max-h-[160px] overflow-y-auto pr-1">
-                      {textureLibrary
-                        .find((c) => c.category === activeTextureCategory)
-                        ?.textures.map((texture) => (
-                          <button
-                            key={texture.id}
-                            title={texture.name}
-                            disabled={isModelLoading}
-                            onClick={() => {
-                              if (isModelLoading || !onApplyMaterial) return;
-                              setIsModelLoading(true);
-                              setTimeout(() => {
-                                onApplyMaterial(selectedMaterial, texture);
-                                setTimeout(() => setIsModelLoading(false), 800);
-                              }, 50);
-                            }}
-                            className={`relative rounded-lg border-2 overflow-hidden aspect-square flex items-center justify-center transition-all ${appliedMaterials?.[selectedMaterial || "all"]?.id === texture.id ? "border-[#c05520]" : "border-transparent"}`}
-                          >
-                            {texture.preview ? (
-                              <img src={texture.preview} alt={texture.name} className="absolute inset-0 w-full h-full object-cover" />
-                            ) : (
-                              <div className="text-[8px] text-gray-400 p-0.5">{texture.name}</div>
-                            )}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-800 text-xs">Size</span>
+                  <span className="text-[10px] font-medium text-gray-500">
+                    {baseDimensions
+                      ? `${baseDimensions.length} x ${baseDimensions.width} x ${baseDimensions.height} mm`
+                      : "Loading..."}
+                  </span>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Custom features button */}
+            <button
+              onClick={() => onProceed(selectedMaterial)}
+              className="w-full flex items-center justify-between p-3 rounded-xl border border-[#c05520] bg-orange-50/20 hover:bg-orange-50/50 transition-colors cursor-pointer shadow-sm"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-6.5 h-6.5 rounded-lg bg-white shadow-sm flex items-center justify-center border border-orange-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                  </svg>
+                </div>
+                <span className="font-bold text-[#c05520] text-xs">
+                  Custom Features
+                </span>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-[#c05520] animate-bounce-right-loop">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+
+            {/* Pick & Paint */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700">Pick &amp; Paint</label>
+              <div className="flex items-center gap-2 justify-start">
+                <button
+                  onClick={() => {
+                    if (onApplyColor) onApplyColor("all", null);
+                    setBrushColor("__none__");
+                    setColorBrushActive(false);
+                  }}
+                  title="Remove applied colors"
+                  className="w-7 h-7 rounded-lg border-2 border-red-200 bg-red-50/50 cursor-pointer flex items-center justify-center transition-all hover:scale-105"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#ef4444" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setBrushColor("transparent");
+                    setColorBrushActive(true);
+                  }}
+                  className={`w-7 h-7 rounded-lg border-2 transition-all hover:scale-105 cursor-pointer ${colorBrushActive && brushColor === "transparent" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
+                  style={{
+                    background: "conic-gradient(#cbd5e1 25%, white 0 50%, #cbd5e1 0 75%, white 0)",
+                    backgroundSize: "6px 6px",
+                  }}
+                  title="Paint transparent"
+                />
+
+                <div
+                  className={`relative w-7 h-7 rounded-lg overflow-hidden cursor-pointer transition-all border-2 ${colorBrushActive && brushColor !== "transparent" && brushColor !== "__none__" ? "border-[#c05520] shadow-sm" : "border-gray-200"}`}
+                  style={{ background: brushColor === "__none__" ? "#f3f4f6" : brushColor }}
+                  title="Pick custom color"
+                >
+                  <input
+                    type="color"
+                    value={brushColor === "__none__" ? "#3b82f6" : brushColor}
+                    onChange={(e) => {
+                      setBrushColor(e.target.value);
+                      setColorBrushActive(true);
+                    }}
+                    className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 opacity-0 cursor-pointer z-10"
+                  />
+                  {brushColor === "__none__" && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-pink-400 to-orange-400 opacity-80" />
+                  )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (!colorBrushActive && brushColor === "__none__") {
+                      setPickerMessage("Pick a color first!");
+                      setFlashColorPicker(true);
+                      setTimeout(() => { setPickerMessage(""); setFlashColorPicker(false); }, 3000);
+                      return;
+                    }
+                    setColorBrushActive((v) => !v);
+                    setPickerMessage("");
+                  }}
+                  className={`flex items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${colorBrushActive ? "bg-[#c05520] text-white border-transparent" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122A3 3 0 0012 21M9.53 16.122L12 11M9.53 16.122l1.688-1.688m.782 5.09a3 3 0 004.09-3.94l.82-1.025m-4.91 4.965l-.82 1.025M12 11l5-5" />
+                  </svg>
+                  {colorBrushActive ? "Brush On" : "Pick Color"}
+                </button>
+              </div>
+              {pickerMessage && <span className="text-[10px] text-red-500 font-bold">{pickerMessage}</span>}
+            </div>
+
+            {/* Metallic & Roughness sliders */}
+            <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+              <DebouncedSlider
+                label="Metallic"
+                value={appliedMetallic?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.1}
+                onChange={(val) => onApplyMetallic && onApplyMetallic(selectedMaterial, val)}
+              />
+              <DebouncedSlider
+                label="Roughness"
+                value={appliedRoughness?.[selectedMaterial && selectedMaterial !== "none" ? selectedMaterial : "all"] ?? 0.5}
+                onChange={(val) => onApplyRoughness && onApplyRoughness(selectedMaterial, val)}
+              />
+            </div>
+
+            {/* Texture library */}
+            <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-gray-700">Textures</span>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsTextureDropdownOpen(!isTextureDropdownOpen)}
+                      className="p-1 rounded bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 cursor-pointer flex items-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+                    {isTextureDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsTextureDropdownOpen(false)} />
+                        <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto py-1">
+                          {textureLibrary.map((category) => (
+                            <button
+                              key={category.category}
+                              onClick={() => {
+                                setActiveTextureCategory(category.category);
+                                setIsTextureDropdownOpen(false);
+                              }}
+                              className={`w-full px-3 py-1.5 text-left text-[11px] font-semibold hover:bg-gray-50 transition-colors cursor-pointer ${activeTextureCategory === category.category ? "text-[#c05520] bg-orange-50/50" : "text-gray-700"}`}
+                            >
+                              {category.category}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {!!(appliedMaterials?.[selectedMaterial || "all"] || appliedMaterials?.["all"]) && (
+                  <button
+                    onClick={() => onApplyMaterial && onApplyMaterial(selectedMaterial, null)}
+                    className="text-[10px] text-gray-500 hover:text-red-600 transition-colors cursor-pointer font-bold"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-4 gap-3 max-h-[160px] overflow-y-auto pr-1">
+                {textureLibrary
+                  .find((c) => c.category === activeTextureCategory)
+                  ?.textures.map((texture) => (
+                    <button
+                      key={texture.id}
+                      title={texture.name}
+                      disabled={isModelLoading}
+                      onClick={() => {
+                        if (isModelLoading || !onApplyMaterial) return;
+                        setIsModelLoading(true);
+                        setTimeout(() => {
+                          onApplyMaterial(selectedMaterial, texture);
+                          setTimeout(() => setIsModelLoading(false), 800);
+                        }, 50);
+                      }}
+                      className={`relative rounded-lg border-2 overflow-hidden aspect-square flex items-center justify-center transition-all ${appliedMaterials?.[selectedMaterial || "all"]?.id === texture.id ? "border-[#c05520]" : "border-transparent"}`}
+                    >
+                      {texture.preview ? (
+                        <img src={texture.preview} alt={texture.name} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-[8px] text-gray-400 p-0.5">{texture.name}</div>
+                      )}
+                    </button>
+                  ))}
+              </div>
+            </div>
           </div>
         </div>
+      </FloatingPopupWrapper>
 
 
-        {activeTab === "scene" && (
-          <HdriLoadingOverlay isModelLoading={isModelLoading} />
-        )}
-      </div>
+      <HdriLoadingOverlay isModelLoading={isModelLoading} />
 
 
       {/* Right Floating Tools Pill â€” repositioned below top header */}
@@ -6071,6 +6194,9 @@ export default function EditorScreen1({
             setActiveTab(tab);
           }
         }}
+        multiWindow={multiWindow}
+        setMultiWindow={setMultiWindow}
+        openTabs={openTabs}
         onResetView={() => {
           if (orbitControlsRef.current) {
             orbitControlsRef.current.reset();

@@ -87,6 +87,48 @@ export default function EditorPage() {
 
   // Lift activeTab state here to preserve it when switching screens
   const [activeTab, setActiveTab] = useState("edit");
+  const [multiWindow, setMultiWindow] = useState(false);
+  const [openTabs, setOpenTabs] = useState({
+    models: false,
+    layout: false,
+    edit: true,
+    scene: false,
+    gallery: false,
+  });
+
+  const handleSetActiveTab = (tab) => {
+    if (!tab) {
+      if (multiWindow) {
+        // Toggle off all or none
+      } else {
+        setActiveTab(null);
+        setOpenTabs({
+          models: false,
+          layout: false,
+          edit: false,
+          scene: false,
+          gallery: false,
+        });
+      }
+      return;
+    }
+    
+    if (multiWindow) {
+      setOpenTabs((prev) => ({
+        ...prev,
+        [tab]: !prev[tab],
+      }));
+    } else {
+      setActiveTab(tab);
+      setOpenTabs({
+        models: tab === "models",
+        layout: tab === "layout",
+        edit: tab === "edit",
+        scene: tab === "scene",
+        gallery: tab === "gallery",
+      });
+    }
+  };
 
   // Unified state for size, textures, colors, and physical materials
   const [editorState, setEditorState] = useState({
@@ -679,7 +721,10 @@ export default function EditorPage() {
           canRedo={canRedo}
           isActive={currentScreen === 1}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleSetActiveTab}
+          multiWindow={multiWindow}
+          setMultiWindow={setMultiWindow}
+          openTabs={openTabs}
           selectedCapUrl={selectedCapUrl}
           onSelectCap={setSelectedCapUrl}
           uvEditsApplied={editorState.uvEditsApplied}

@@ -135,12 +135,15 @@ export default function BottomBar({
   onResetView,
   onToggleWireframe,
   wireframe,
+  multiWindow = false,
+  setMultiWindow,
+  openTabs = {},
 }) {
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 max-w-[95vw] overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
       <div className="flex items-center gap-1">
         {bottomNavItems.map((item) => {
-          const isActive = activeTab === item.id;
+          const isActive = multiWindow ? !!openTabs[item.id] : activeTab === item.id;
           return (
             <button
               key={item.id}
@@ -170,6 +173,21 @@ export default function BottomBar({
             </button>
           );
         })}
+      </div>
+
+      <div className="w-[1px] h-6 bg-gray-200/80 mx-1 shrink-0" />
+
+      {/* Multi-Window Mode Toggle */}
+      <div className="flex items-center gap-2 px-2 shrink-0 select-none">
+        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Multi-Tab</span>
+        <button
+          onClick={() => setMultiWindow?.(!multiWindow)}
+          className={`w-9 h-5 flex shrink-0 items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${multiWindow ? "bg-[#C15F27]" : "bg-gray-300"}`}
+        >
+          <div
+            className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-200 ${multiWindow ? "translate-x-4" : ""}`}
+          />
+        </button>
       </div>
     </div>
   );
