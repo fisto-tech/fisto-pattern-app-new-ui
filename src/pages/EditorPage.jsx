@@ -381,6 +381,41 @@ export default function EditorPage() {
     setCurrentScreen(2);
   };
 
+  const handleLiveUvTextureUpdate = (materialId, liveDataUrl) => {
+    let targetMat = materialId || selectedMaterial || "all";
+    if (targetMat === "none") {
+      targetMat = "all";
+    }
+
+    const isBottleModel =
+      modelUrl &&
+      (modelUrl.toLowerCase().includes("plastic") ||
+        modelUrl.toLowerCase().includes("glass") ||
+        modelUrl.toLowerCase().includes("soft"));
+
+    setEditorState((prev) => {
+      const newTextures = { ...prev.textures };
+      const newLastApplied = { ...prev.lastApplied };
+      
+      if (isBottleModel && targetMat === "all") {
+        newTextures["Lid Label"] = liveDataUrl;
+        newTextures["Body Label"] = liveDataUrl;
+        newLastApplied["Lid Label"] = "texture";
+        newLastApplied["Body Label"] = "texture";
+      } else {
+        newTextures[targetMat] = liveDataUrl;
+        newLastApplied[targetMat] = "texture";
+      }
+
+      return {
+        ...prev,
+        textures: newTextures,
+        lastApplied: newLastApplied,
+        uvEditsApplied: true,
+      };
+    });
+  };
+
   // Optional: Transition back to Screen 1
   const handleBackToModelViewer = (textureDataUrl, colorHex) => {
     let targetMat = selectedMaterial || "all";
@@ -706,7 +741,7 @@ export default function EditorPage() {
 
   return (
     <div className="w-full h-full overflow-hidden relative">
-      {/* Screen 1: 3D Editor — always rendered/visible */}
+      {/* Screen 1: 3D Editor & UV Editor Combined */}
       <div className="absolute inset-0 z-10">
         <EditorScreen1
           modelUrl={modelUrl}
@@ -758,33 +793,12 @@ export default function EditorPage() {
           onSelectCap={setSelectedCapUrl}
           uvEditsApplied={editorState.uvEditsApplied}
           onClearUvEdits={handleClearUvEdits}
+          isUvEditing={currentScreen === 2}
+          onBackFromUv={handleBackToModelViewer}
+          canvasResetKey={canvasResetKey}
+          onLiveTextureUpdate={handleLiveUvTextureUpdate}
         />
       </div>
-
-      {/* Screen 2: UV Texture Editor — renders as floating popup overlay */}
-      {currentScreen === 2 && (
-        <div className="absolute inset-0 z-50 pointer-events-none">
-          <EditorScreen2
-            modelUrl={modelUrl}
-            setModelUrl={setModelUrl}
-            appliedMaterials={editorState.materials}
-            appliedColors={editorState.colors}
-            appliedTextures={editorState.textures}
-            appliedLastApplied={editorState.lastApplied}
-            activeTab={activeTab}
-            onBack={handleBackToModelViewer}
-            isActive={currentScreen === 2}
-            canvasResetKey={canvasResetKey}
-            sceneBgColor={sceneBgColor}
-            sceneBgImage={sceneBgImage}
-            selectedCapUrl={selectedCapUrl}
-            onSelectCap={setSelectedCapUrl}
-            selectedMaterial={selectedMaterial}
-            isPopupMode={true}
-            onClosePopup={() => setCurrentScreen(1)}
-          />
-        </div>
-      )}
     </div>
   );
 }

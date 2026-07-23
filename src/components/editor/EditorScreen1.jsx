@@ -109,6 +109,7 @@ import LayoutPopup, { getSingleModelUrl } from "./LayoutPopup";
 import modelPositionsConfig from "./modelPositions.json";
 import ScenePopup from "./ScenePopup";
 import GalleryPopup from "./GalleryPopup";
+import EditorScreen2 from "./EditorScreen2";
 import { getTextureLibrary } from "../../utils/TextureLibrary";
 import blockIcon from "../../assets/images/Editor 1/Icons/block.webp";
 
@@ -3078,6 +3079,10 @@ export default function EditorScreen1({
   multiWindow = false,
   setMultiWindow,
   openTabs = {},
+  isUvEditing = false,
+  onBackFromUv,
+  canvasResetKey,
+  onLiveTextureUpdate,
 }) {
   const isBottleModel = useMemo(() => {
     if (!modelUrl) return false;
@@ -3910,7 +3915,11 @@ export default function EditorScreen1({
       {/* 3D Canvas Background */}
       <div
         id="three-canvas-container"
-        className="absolute inset-0 z-0 transition-colors duration-300"
+        className={`absolute transition-all duration-300 ${
+          isUvEditing
+            ? "w-[280px] h-[280px] rounded-2xl border-4 border-white shadow-[0_16px_40px_rgba(0,0,0,0.14)] bottom-[96px] right-6 z-30 overflow-hidden bg-white"
+            : "inset-0 z-0"
+        }`}
         style={{
           cursor: colorBrushActive
             ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='5' fill='${encodeURIComponent(brushColor)}' stroke='white' stroke-width='1'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4' stroke='%23333' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") 16 16, crosshair`
@@ -3980,7 +3989,7 @@ export default function EditorScreen1({
             ref={orbitControlsRef}
             makeDefault
             target={[0, getModelCenterY(), 0]}
-            enableRotate={toolMode === "cursor"}
+            enableRotate={toolMode === "cursor" && !colorBrushActive}
             enablePan={toolMode === "hand" && !colorBrushActive}
             enableZoom={true}
             screenSpacePanning={true}
@@ -4076,10 +4085,18 @@ export default function EditorScreen1({
             modelUrl.toLowerCase().includes("oval") ||
             modelUrl.toLowerCase().includes("round") ||
             modelUrl.toLowerCase().includes("tamper")) && (
-            <div className="absolute top-[8vh] left-1/2 transform -translate-x-1/2 z-10 pointer-events-auto flex items-center justify-center">
+            <div className={`absolute z-10 pointer-events-auto flex items-center justify-center ${
+              isUvEditing
+                ? "top-3 left-4 transform-none"
+                : "top-[8vh] left-1/2 transform -translate-x-1/2"
+            }`}>
               <button
                 onClick={() => setIsLidOpen(!isLidOpen)}
-                className="flex items-center gap-2 bg-transparent text-gray-700 font-medium text-[15px] hover:text-[#c05520] transition-colors border-none cursor-pointer"
+                className={`flex items-center gap-1.5 transition-all border-none cursor-pointer ${
+                  isUvEditing
+                    ? "bg-white/90 backdrop-blur-sm text-gray-700 hover:text-[#c05520] text-[11px] font-extrabold px-2.5 py-1.5 rounded-xl shadow-sm border border-gray-200/60 hover:scale-105 active:scale-95"
+                    : "bg-transparent text-gray-700 font-medium text-[15px] hover:text-[#c05520]"
+                }`}
               >
                 {isLidOpen ? (
                   <>
@@ -4087,9 +4104,9 @@ export default function EditorScreen1({
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      strokeWidth={2}
+                      strokeWidth={2.2}
                       stroke="currentColor"
-                      className="w-5 h-5"
+                      className={isUvEditing ? "w-3.5 h-3.5" : "w-5 h-5"}
                     >
                       <path
                         strokeLinecap="round"
@@ -4105,9 +4122,9 @@ export default function EditorScreen1({
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      strokeWidth={2}
+                      strokeWidth={2.2}
                       stroke="currentColor"
-                      className="w-5 h-5"
+                      className={isUvEditing ? "w-3.5 h-3.5" : "w-5 h-5"}
                     >
                       <path
                         strokeLinecap="round"
@@ -4289,6 +4306,37 @@ export default function EditorScreen1({
               </button>
             </div>
           )}
+      </div>
+      
+      {/* Embedded UV Editor Canvas & Panels */}
+      <div
+        className="absolute inset-0 z-10 bg-[#f5efe6] flex flex-col overflow-hidden transition-all duration-300"
+        style={{
+          opacity: isUvEditing ? 1 : 0,
+          pointerEvents: isUvEditing ? "auto" : "none",
+          visibility: isUvEditing ? "visible" : "hidden"
+        }}
+      >
+        <EditorScreen2
+          modelUrl={modelUrl}
+          setModelUrl={setModelUrl}
+          appliedMaterials={appliedMaterials}
+          appliedColors={appliedColors}
+          appliedTextures={appliedTextures}
+          appliedLastApplied={appliedLastApplied}
+          activeTab={activeTab}
+          onBack={onBackFromUv}
+          isActive={isUvEditing}
+          canvasResetKey={canvasResetKey}
+          sceneBgColor={bgColor}
+          sceneBgImage={bgImage}
+          selectedCapUrl={selectedCapUrl}
+          onSelectCap={onSelectCap}
+          selectedMaterial={selectedMaterial || "all"}
+          isPopupMode={false}
+          isEmbeddedMode={true}
+          onLiveTextureUpdate={onLiveTextureUpdate}
+        />
       </div>
 
       {/* Floating UI Elements */}
@@ -5016,8 +5064,8 @@ export default function EditorScreen1({
       <HdriLoadingOverlay isModelLoading={isModelLoading} />
 
 
-      {/* Right Floating Tools Pill â€” repositioned below top header */}
-      <div className="editor-right-tools absolute right-[1.5vw] top-24 z-10 bg-white rounded-full p-2 shadow-lg flex flex-col gap-[0.6vw]">
+      {!isUvEditing && (
+        <div className="editor-right-tools absolute right-[1.5vw] top-24 z-10 bg-white rounded-full p-2 shadow-lg flex flex-col gap-[0.6vw]">
         <Tooltip1 label="Select" side="left">
           <button
             onClick={() => handleSetToolMode("cursor")}
@@ -5639,6 +5687,7 @@ export default function EditorScreen1({
           </Tooltip1>
         </div>
       </div>
+      )}
 
       {/* Floating Right Side Cap Selector (Only for Bottle Models when in Edit mode) */}
       {activeTab === "edit" && isBottleModel && (
@@ -6287,10 +6336,14 @@ export default function EditorScreen1({
 
       {/* Floating Bottom Navigation Bar */}
       <BottomBar
-        activeTab={activeTab}
+        activeTab={activeTab || (isUvEditing ? "uv_editor" : null)}
         setActiveTab={(tab) => {
           if (tab === "uv_editor") {
-            onProceed(selectedMaterial);
+            if (!isUvEditing) {
+              onProceed(selectedMaterial);
+            } else {
+              setActiveTab(null);
+            }
           } else {
             setActiveTab(tab);
           }

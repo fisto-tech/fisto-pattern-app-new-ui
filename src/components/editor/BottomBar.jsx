@@ -145,7 +145,7 @@ export default function BottomBar({
   openTabs = {},
 }) {
   return (
-    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 max-w-[95vw] overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)] no-scrollbar">
+    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 max-w-[95vw] overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)] no-scrollbar">
       <div className="flex items-center gap-1 shrink-0">
         {bottomNavItems.map((item) => {
           const isActive = multiWindow ? !!openTabs[item.id] : activeTab === item.id;

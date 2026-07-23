@@ -4740,8 +4740,11 @@ const Canvas = forwardRef(
       },
       getSelectedLayer: () => selectedImageRef.current,
       getCleanTexture: () => {
-        setSelectedFace(null);
         bakeTexture(true); // Bake synchronously without selection highlight
+        return textureCanvasRef.current.toDataURL("image/png");
+      },
+      getLiveTexture: () => {
+        bakeTexture(false); // Bake WITH selection highlight
         return textureCanvasRef.current.toDataURL("image/png");
       },
       exportAsPNG: () => {

@@ -961,6 +961,8 @@ export default function EditorScreen2({
   selectedMaterial,
   isPopupMode = false,
   onClosePopup,
+  isEmbeddedMode = false,
+  onLiveTextureUpdate,
 }) {
   const [showMobilePanel, setShowMobilePanel] = useState(false);
   const [showTapeLayout, setShowTapeLayout] = useState(false);
@@ -1240,6 +1242,27 @@ export default function EditorScreen2({
     textStyleName: "none",
   });
 
+  const [showAdvancedText, setShowAdvancedText] = useState(false);
+
+  useEffect(() => {
+    if (isEmbeddedMode && canvasRef.current) {
+      const timer = setTimeout(() => {
+        const hasArtwork = canvasRef.current.hasArtwork?.() ?? false;
+        const hasSelection = canvasRef.current.hasSelectedFace?.() ?? false;
+        let dataUrl = null;
+        if ((hasArtwork || hasSelection) && canvasRef.current.getLiveTexture) {
+          dataUrl = canvasRef.current.getLiveTexture();
+        } else if (hasArtwork && textureCanvasRef.current) {
+          dataUrl = textureCanvasRef.current.toDataURL("image/png");
+        }
+        if (onLiveTextureUpdate) {
+          onLiveTextureUpdate(selectedMaterial, dataUrl);
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [textureVersion, isEmbeddedMode, selectedMaterial, onLiveTextureUpdate]);
+
   // ── Export Modal State ───────────────────────────────────────────────────
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -1408,35 +1431,60 @@ export default function EditorScreen2({
       <div className="flex flex-1 overflow-hidden bg-[#f5efe6]">
         {/* ── Left Side Panel ────────────────────────────────────────── */}
         <div
-          className={`absolute top-0 left-0 z-20 h-full gap-4 transition-all duration-300 flex flex-col shrink-0 pointer-events-none ${
+          className={`absolute z-20 transition-all duration-300 flex flex-col shrink-0 pointer-events-none ${
+            isEmbeddedMode
+              ? "left-4 top-20 bottom-[82px] py-4 gap-3"
+              : "left-0 top-0 h-full py-6 pl-6 pr-0 gap-4"
+          } ${
             showLeftPanel
-              ? "w-[350px] py-6 pl-6 pr-0 opacity-100"
-              : "w-0 py-0 pl-0 pr-0 opacity-0 overflow-hidden"
+              ? "w-[350px] opacity-100"
+              : "w-0 opacity-0 overflow-hidden"
           }`}
         >
-          {/* Header Actions */}
-          <div className="flex justify-start items-center gap-3 w-full shrink-0 pointer-events-auto">
-            {/* Back button */}
-            <button
-              onClick={onBack}
-              className="w-14 h-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-center border-none cursor-pointer hover:bg-gray-50 transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5 text-gray-800"
+          {/* Header Actions / Embedded Apply buttons */}
+          {isEmbeddedMode ? (
+            <div className="w-full shrink-0 pointer-events-auto flex gap-2">
+              <button
+                onClick={handleSave}
+                className="flex-1 py-3 px-4 rounded-2xl bg-[#c05520] hover:bg-[#a04619] text-white font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 border-none"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                />
-              </svg>
-            </button>
-          </div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                Apply Changes
+              </button>
+              <button
+                onClick={() => onBack && onBack()}
+                className="py-3 px-4 rounded-2xl bg-white hover:bg-red-50 text-gray-700 hover:text-red-600 font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer border border-gray-100"
+                title="Cancel without applying"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex justify-start items-center gap-3 w-full shrink-0 pointer-events-auto">
+              {/* Back button */}
+              <button
+                onClick={onBack}
+                className="w-14 h-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-center border-none cursor-pointer hover:bg-gray-50 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-5 h-5 text-gray-800"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* Tab switcher */}
           <div className="flex bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-1.5 gap-1 shrink-0 items-center pointer-events-auto">
@@ -1630,212 +1678,6 @@ export default function EditorScreen2({
                       </div>
                     </div>
 
-                    {/* Blend (Arch) */}
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                        Blend (Arch) — {textProps.bend}
-                      </label>
-                      <input
-                        type="range"
-                        min={-100}
-                        max={100}
-                        step={1}
-                        value={textProps.bend}
-                        onChange={(e) =>
-                          applyTextProp("bend", Number(e.target.value))
-                        }
-                        className="w-full accent-[#c0623a] cursor-pointer"
-                      />
-                      <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
-                        <span>Up</span>
-                        <span>Straight</span>
-                        <span>Down</span>
-                      </div>
-                    </div>
-
-                    {/* Letter Spacing */}
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                        Letter Spacing — {textProps.letterSpacing}
-                      </label>
-                      <input
-                        type="range"
-                        min={-20}
-                        max={100}
-                        step={1}
-                        value={textProps.letterSpacing}
-                        onChange={(e) =>
-                          applyTextProp("letterSpacing", Number(e.target.value))
-                        }
-                        className="w-full accent-[#c0623a] cursor-pointer"
-                      />
-                      <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
-                        <span>Tight</span>
-                        <span>Normal</span>
-                        <span>Loose</span>
-                      </div>
-                    </div>
-
-                    {/* Alignment Options */}
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                        Alignment (to Selection)
-                      </label>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              canvasRef.current?.alignSelectedLayer(
-                                "left",
-                                null,
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
-                            title="Align Left"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={2}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() =>
-                              canvasRef.current?.alignSelectedLayer(
-                                "center",
-                                null,
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
-                            title="Align Center Horizontal"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={2}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() =>
-                              canvasRef.current?.alignSelectedLayer(
-                                "right",
-                                null,
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
-                            title="Align Right"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={2}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              canvasRef.current?.alignSelectedLayer(null, "top")
-                            }
-                            className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
-                            title="Align Top"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={2}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() =>
-                              canvasRef.current?.alignSelectedLayer(
-                                null,
-                                "center",
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
-                            title="Align Center Vertical"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={2}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() =>
-                              canvasRef.current?.alignSelectedLayer(
-                                null,
-                                "bottom",
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
-                            title="Align Bottom"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={2}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Bold / Italic / Underline */}
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
@@ -1891,78 +1733,6 @@ export default function EditorScreen2({
                       </div>
                     </div>
 
-                    {/* Stroke Color */}
-                    {textProps.stroke && (
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                          Stroke Color
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
-                            <input
-                              type="color"
-                              value={textProps.strokeColor || "#000000"}
-                              onInput={(e) =>
-                                applyTextProp("strokeColor", e.target.value)
-                              }
-                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
-                            />
-                          </div>
-                          <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
-                            {textProps.strokeColor || "#000000"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Shadow / Glow Color */}
-                    {textProps.shadow && (
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                          Shadow / Glow Color
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
-                            <input
-                              type="color"
-                              value={textProps.shadowColor || "#000000"}
-                              onInput={(e) =>
-                                applyTextProp("shadowColor", e.target.value)
-                              }
-                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
-                            />
-                          </div>
-                          <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
-                            {textProps.shadowColor || "#000000"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 3D Extrusion Color */}
-                    {textProps.style3d && (
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                          3D Extrusion Color
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
-                            <input
-                              type="color"
-                              value={textProps.style3dColor || "#000000"}
-                              onInput={(e) =>
-                                applyTextProp("style3dColor", e.target.value)
-                              }
-                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
-                            />
-                          </div>
-                          <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
-                            {textProps.style3dColor || "#000000"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Preset Colors */}
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
@@ -1999,6 +1769,225 @@ export default function EditorScreen2({
                         ))}
                       </div>
                     </div>
+
+                    {/* Collapsible Advanced Settings (Curve, Spacing, Alignments, Effects) */}
+                    <div className="border-t border-gray-100 pt-3">
+                      <button
+                        onClick={() => setShowAdvancedText(!showAdvancedText)}
+                        className="w-full flex items-center justify-between py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wide border-none bg-transparent cursor-pointer hover:text-gray-800 transition-colors"
+                      >
+                        <span>More Effects & Spacing</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className={`w-4 h-4 transition-transform duration-200 ${showAdvancedText ? 'rotate-180' : ''}`}
+                        >
+                          <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+
+                      {showAdvancedText && (
+                        <div className="flex flex-col gap-4 mt-3 pb-2 transition-all">
+                          {/* Blend (Arch) */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                              Blend (Arch) — {textProps.bend}
+                            </label>
+                            <input
+                              type="range"
+                              min={-100}
+                              max={100}
+                              step={1}
+                              value={textProps.bend}
+                              onChange={(e) =>
+                                applyTextProp("bend", Number(e.target.value))
+                              }
+                              className="w-full accent-[#c0623a] cursor-pointer"
+                            />
+                            <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                              <span>Up</span>
+                              <span>Straight</span>
+                              <span>Down</span>
+                            </div>
+                          </div>
+
+                          {/* Letter Spacing */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                              Letter Spacing — {textProps.letterSpacing}
+                            </label>
+                            <input
+                              type="range"
+                              min={-20}
+                              max={100}
+                              step={1}
+                              value={textProps.letterSpacing}
+                              onChange={(e) =>
+                                applyTextProp("letterSpacing", Number(e.target.value))
+                              }
+                              className="w-full accent-[#c0623a] cursor-pointer"
+                            />
+                            <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                              <span>Tight</span>
+                              <span>Normal</span>
+                              <span>Loose</span>
+                            </div>
+                          </div>
+
+                          {/* Alignment Options */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                              Alignment (to Selection)
+                            </label>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() =>
+                                    canvasRef.current?.alignSelectedLayer("left", null)
+                                  }
+                                  className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
+                                  title="Align Left"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    canvasRef.current?.alignSelectedLayer("center", null)
+                                  }
+                                  className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
+                                  title="Align Center Horizontal"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    canvasRef.current?.alignSelectedLayer("right", null)
+                                  }
+                                  className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
+                                  title="Align Right"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />
+                                  </svg>
+                                </button>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() =>
+                                    canvasRef.current?.alignSelectedLayer(null, "top")
+                                  }
+                                  className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
+                                  title="Align Top"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    canvasRef.current?.alignSelectedLayer(null, "center")
+                                  }
+                                  className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
+                                  title="Align Center Vertical"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    canvasRef.current?.alignSelectedLayer(null, "bottom")
+                                  }
+                                  className="flex-1 flex items-center justify-center py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer transition-all"
+                                  title="Align Bottom"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Stroke Color */}
+                          {textProps.stroke && (
+                            <div>
+                              <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                                Stroke Color
+                              </label>
+                              <div className="flex items-center gap-3">
+                                <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
+                                  <input
+                                    type="color"
+                                    value={textProps.strokeColor || "#000000"}
+                                    onInput={(e) =>
+                                      applyTextProp("strokeColor", e.target.value)
+                                    }
+                                    className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
+                                  />
+                                </div>
+                                <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
+                                  {textProps.strokeColor || "#000000"}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Shadow / Glow Color */}
+                          {textProps.shadow && (
+                            <div>
+                              <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                                Shadow / Glow Color
+                              </label>
+                              <div className="flex items-center gap-3">
+                                <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
+                                  <input
+                                    type="color"
+                                    value={textProps.shadowColor || "#000000"}
+                                    onInput={(e) =>
+                                      applyTextProp("shadowColor", e.target.value)
+                                    }
+                                    className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
+                                  />
+                                </div>
+                                <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
+                                  {textProps.shadowColor || "#000000"}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3D Extrusion Color */}
+                          {textProps.style3d && (
+                            <div>
+                              <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                                3D Extrusion Color
+                              </label>
+                              <div className="flex items-center gap-3">
+                                <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
+                                  <input
+                                    type="color"
+                                    value={textProps.style3dColor || "#000000"}
+                                    onInput={(e) =>
+                                      applyTextProp("style3dColor", e.target.value)
+                                    }
+                                    className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
+                                  />
+                                </div>
+                                <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
+                                  {textProps.style3dColor || "#000000"}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="w-full">
@@ -2030,35 +2019,39 @@ export default function EditorScreen2({
 
         {/* ── Center Canvas ─────────────────────────────────────────────── */}
         <div
-          className="flex-1 flex flex-col h-full min-w-0 relative transition-all duration-300"
+          className={`flex-1 flex flex-col min-w-0 relative transition-all duration-300 ${
+            isEmbeddedMode ? "h-[calc(100vh-162px)] mt-20 mb-[82px]" : "h-full"
+          }`}
           style={{
             paddingRight: 0,
           }}
         >
           {/* Floating Left Panel Trigger when collapsed */}
           {!showLeftPanel && (
-            <div className="absolute top-6 left-6 z-30 flex flex-col gap-3">
-              {/* Back button */}
-              <button
-                onClick={onBack}
-                className="w-14 h-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-center border-none cursor-pointer hover:bg-gray-50 text-gray-800 transition-all duration-200 hover:scale-105 active:scale-95"
-                title="Go Back"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="w-5 h-5"
+            <div className={`absolute left-6 z-30 flex flex-col gap-3 ${isEmbeddedMode ? "top-24" : "top-6"}`}>
+              {/* Back button - only in normal mode */}
+              {!isEmbeddedMode && (
+                <button
+                  onClick={onBack}
+                  className="w-14 h-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-center border-none cursor-pointer hover:bg-gray-50 text-gray-800 transition-all duration-200 hover:scale-105 active:scale-95"
+                  title="Go Back"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+                    />
+                  </svg>
+                </button>
+              )}
               {/* Open button */}
               <button
                 onClick={() => setShowLeftPanel(true)}
@@ -2186,23 +2179,24 @@ export default function EditorScreen2({
         </div>
 
         {/* ── Right Panel ───────────────────────────────────────────────── */}
-        <div
-          className={`
-          absolute right-0 z-40
-          pb-6 pr-6 h-fit pointer-events-none
-          ${showMobilePanel ? "block" : "hidden lg:block"}
-        `}
-          style={{
-            top: `${rightPanelY}px`,
-            transition: isDraggingRightPanel
-              ? "none"
-              : "top 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease",
-          }}
-        >
+        {!isEmbeddedMode && (
           <div
-            ref={rightPanelRef}
-            className="h-fit rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 bg-white flex flex-col pointer-events-auto"
+            className={`
+            absolute z-40 h-fit pointer-events-none
+            right-0 pb-6 pr-6
+            ${showMobilePanel ? "block" : "hidden lg:block"}
+          `}
+            style={{
+              top: `${rightPanelY}px`,
+              transition: isDraggingRightPanel
+                ? "none"
+                : "top 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease",
+            }}
           >
+            <div
+              ref={rightPanelRef}
+              className="h-fit rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 bg-white flex flex-col pointer-events-auto"
+            >
             {/* Drag Handle for Vertical Repositioning */}
             <div
               className="w-full h-5 flex items-center justify-center cursor-ns-resize hover:bg-gray-50 active:cursor-grabbing border-b border-gray-100 select-none bg-white transition-colors"
@@ -2245,6 +2239,7 @@ export default function EditorScreen2({
             />
           </div>
         </div>
+        )}
 
         {/* Mobile overlay backdrop */}
         {showMobilePanel && (
