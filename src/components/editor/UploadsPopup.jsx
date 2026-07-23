@@ -228,7 +228,7 @@ export default function UploadsPopup({
     if (modelUrl && modelUrl.toLowerCase().includes('tape')) {
       return 'pattern';
     }
-    return null;
+    return 'logo';
   });
   const [mainTab, setMainTab] = useState('your'); // 'your' | 'default'
   const [userCategory, setUserCategory] = useState('All');
@@ -430,9 +430,9 @@ export default function UploadsPopup({
         )}
 
         {/* ── 1. Upload Type Selector ── */}
-        <div style={{ flexShrink: 0 }} className='mb-5'>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Upload as</p>
-          <div style={{ display: 'grid', gridTemplateColumns: selectedType ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
+        <div style={{ flexShrink: 0 }} className='mb-4'>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Upload as</p>
+          <div style={{ display: 'flex', gap: 8, width: '100%' }}>
             {UPLOAD_TYPES.map(t => {
               const active = selectedType === t.id;
               return (
@@ -440,50 +440,28 @@ export default function UploadsPopup({
                   key={t.id}
                   onClick={() => setSelectedType(t.id)}
                   style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                    padding: '10px 4px',
-                    borderRadius: 10,
-                    border: active ? `2px solid ${accentBg}` : `1.5px solid ${borderClr}`,
-                    background: active ? accentLight : '#f9fafb',
-                    color: active ? accentBg : '#000000',
+                    flex: 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    padding: '8px 10px',
+                    borderRadius: 12,
+                    border: active ? 'none' : `1px solid ${borderClr}`,
+                    background: active ? accentBg : '#f3f4f6',
+                    color: active ? '#ffffff' : '#4b5563',
                     cursor: 'pointer',
-                    fontWeight: active ? 700 : 500,
-                    fontSize: 10,
+                    fontWeight: 700,
+                    fontSize: 11,
                     transition: 'all 0.15s',
                   }}
                 >
-                  {t.icon}
+                  <span style={{ display: 'flex', alignItems: 'center', scale: '0.85' }}>{t.icon}</span>
                   {t.label}
                 </button>
               );
             })}
-            {/* Cancel Button: appears only when a category is selected */}
-            {selectedType && (
-              <button
-                onClick={() => setSelectedType(null)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5,
-                  padding: '10px 4px',
-                  borderRadius: 10,
-                  border: `1.5px solid #fca5a5`,
-                  background: '#fef2f2',
-                  color: '#ef4444',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: 10,
-                  transition: 'all 0.15s',
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" style={{ width: 20, height: 20 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-                Cancel
-              </button>
-            )}
           </div>
         </div>
 
-        {/* ── 2. Drop Zone (shown only when a category is selected) ── */}
+        {/* ── 2. Drop Zone ── */}
         {selectedType && (
           <>
             <div
@@ -494,7 +472,7 @@ export default function UploadsPopup({
                 flexShrink: 0,
                 border: `2px dashed ${isDragOver ? accentBg : borderClr}`,
                 borderRadius: 12,
-                padding: '20px 12px',
+                padding: '14px 10px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
                 background: isDragOver ? accentLight : '#f9fafb',
@@ -503,8 +481,8 @@ export default function UploadsPopup({
               }}
             >
               <div style={{ transform: isDragOver ? 'translateY(-4px)' : 'translateY(0)', transition: 'transform 0.2s' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-                  stroke={isDragOver ? accentBg : '#9ca3af'} style={{ width: 36, height: 36, marginBottom: 8, display: 'block', margin: '0 auto 8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8}
+                  stroke={isDragOver ? accentBg : '#9ca3af'} style={{ width: 28, height: 28, marginBottom: 4, display: 'block', margin: '0 auto 4px' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                 </svg>
               </div>

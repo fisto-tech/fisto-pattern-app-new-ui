@@ -1442,26 +1442,7 @@ export default function EditorScreen2({
           }`}
         >
           {/* Header Actions / Embedded Apply buttons */}
-          {isEmbeddedMode ? (
-            <div className="w-full shrink-0 pointer-events-auto flex gap-2">
-              <button
-                onClick={handleSave}
-                className="flex-1 py-3 px-4 rounded-2xl bg-[#c05520] hover:bg-[#a04619] text-white font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 border-none"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-                Apply Changes
-              </button>
-              <button
-                onClick={() => onBack && onBack()}
-                className="py-3 px-4 rounded-2xl bg-white hover:bg-red-50 text-gray-700 hover:text-red-600 font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer border border-gray-100"
-                title="Cancel without applying"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
+          {!isEmbeddedMode && (
             <div className="flex justify-start items-center gap-3 w-full shrink-0 pointer-events-auto">
               {/* Back button */}
               <button
@@ -2026,6 +2007,25 @@ export default function EditorScreen2({
             paddingRight: 0,
           }}
         >
+          {isEmbeddedMode && (
+            <div className="absolute top-4 right-6 z-40 flex items-center gap-2 pointer-events-auto">
+              <button
+                onClick={handleSave}
+                className="py-2.5 px-4 rounded-xl bg-[#c05520] hover:bg-[#a04619] text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 border-none"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.8} stroke="currentColor" className="w-3.5 h-3.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                Apply Changes
+              </button>
+              <button
+                onClick={() => onBack && onBack()}
+                className="py-2.5 px-4 rounded-xl bg-white hover:bg-red-50 text-gray-700 hover:text-red-600 font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer border border-gray-200"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
           {/* Floating Left Panel Trigger when collapsed */}
           {!showLeftPanel && (
             <div className={`absolute left-6 z-30 flex flex-col gap-3 ${isEmbeddedMode ? "top-24" : "top-6"}`}>
