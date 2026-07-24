@@ -1282,7 +1282,7 @@ export default function EditorScreen2({
   const [showAdvancedText, setShowAdvancedText] = useState(false);
 
   useEffect(() => {
-    if (isEmbeddedMode && canvasRef.current) {
+    if (isActive && isEmbeddedMode && canvasRef.current) {
       const timer = setTimeout(() => {
         const hasArtwork = canvasRef.current.hasArtwork?.() ?? false;
         const hasSelection = canvasRef.current.hasSelectedFace?.() ?? false;
@@ -1298,7 +1298,13 @@ export default function EditorScreen2({
       }, 350);
       return () => clearTimeout(timer);
     }
-  }, [textureVersion, isEmbeddedMode, selectedMaterial, onLiveTextureUpdate]);
+  }, [textureVersion, isEmbeddedMode, selectedMaterial, onLiveTextureUpdate, isActive]);
+
+  useEffect(() => {
+    if (!isActive && canvasRef.current) {
+      canvasRef.current.clearSelection?.();
+    }
+  }, [isActive]);
 
   // ── Export Modal State ───────────────────────────────────────────────────
   const [showExportModal, setShowExportModal] = useState(false);

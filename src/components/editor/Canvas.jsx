@@ -2407,7 +2407,9 @@ const Canvas = forwardRef(
         });
 
         bakeCtx.restore();
-        onTextureUpdatedRef.current();
+        if (!ignoreSelection) {
+          onTextureUpdatedRef.current();
+        }
       },
       [
         bgColor,
@@ -3204,6 +3206,7 @@ const Canvas = forwardRef(
           if (clickedFace !== null) {
             setSelectedFace(clickedFace);
             setSelectedFaceUv(clickedUv);
+            setSelectedFaces(new Set([clickedFace]));
             selectedImageRef.current = null;
             setSelectedImage(null);
             onSelectedLayerChangeRef.current?.(null);
@@ -4589,6 +4592,17 @@ const Canvas = forwardRef(
     };
 
     useImperativeHandle(ref, () => ({
+      clearSelection: () => {
+        setSelectedFaces(new Set());
+        setSelectedFace(null);
+        setSelectedFaceUv(null);
+        setSelectedImage(null);
+        selectedImageRef.current = null;
+        needsDisplayRedrawRef.current = true;
+        bakeTexture();
+        redrawDisplay();
+        onSelectedLayerChangeRef.current?.(null);
+      },
       clearAllArtwork: () => {
         imagesRef.current = [];
         setSelectedImage(null);
@@ -5412,7 +5426,7 @@ const Canvas = forwardRef(
             </div>
             {/* Left Tool Bar */}
             <div 
-              className="absolute z-30 bg-white shadow-[0_4px_25px_rgba(0,0,0,0.15)] flex items-center border border-gray-100 transition-all duration-300 left-4 top-1/2 -translate-y-1/2 flex-col px-1.5 py-2.5 sm:px-2.5 sm:py-4 gap-1 sm:gap-2 rounded-3xl overflow-visible"
+              className="absolute z-30 bg-white shadow-[0_4px_25px_rgba(0,0,0,0.15)] flex items-center border border-gray-100 transition-all duration-300 left-2 sm:left-4 top-1/2 -translate-y-1/2 origin-left scale-[0.55] [@media(min-height:550px)]:scale-[0.65] [@media(min-height:650px)]:scale-75 [@media(min-height:750px)]:scale-90 [@media(min-height:850px)]:scale-100 flex-col px-1.5 py-2.5 sm:px-2.5 sm:py-4 gap-1 sm:gap-2 rounded-3xl overflow-visible"
             >
               {/* Tools */}
               <Tooltip label="Select Tool" position="right">

@@ -1986,6 +1986,7 @@ function AutoSizedModelWithDimensions({
   // Highlight selected material with an outline (EdgesGeometry)
   useEffect(() => {
     if (!clonedScene) return;
+    let outlineChanged = false;
     clonedScene.traverse((obj) => {
       if (!obj.isMesh || !obj.material) return;
       const mArray = Array.isArray(obj.material)
@@ -2011,15 +2012,23 @@ function AutoSizedModelWithDimensions({
           line.scale.set(1.002, 1.002, 1.002);
           obj.add(line);
           obj.userData.outlineMesh = line;
+          outlineChanged = true;
         }
-        obj.userData.outlineMesh.visible = true;
+        if (obj.userData.outlineMesh.visible !== true) {
+          obj.userData.outlineMesh.visible = true;
+          outlineChanged = true;
+        }
       } else {
-        if (obj.userData.outlineMesh) {
+        if (obj.userData.outlineMesh && obj.userData.outlineMesh.visible !== false) {
           obj.userData.outlineMesh.visible = false;
+          outlineChanged = true;
         }
       }
     });
-  }, [clonedScene, selectedMaterialId]);
+    if (outlineChanged) {
+      invalidate();
+    }
+  }, [clonedScene, selectedMaterialId, invalidate]);
 
   // Recompute floorY (shadow catcher height) in same local-coord useMemo
   const { baseTransform, baseDims, floorY } = useMemo(() => {
@@ -3297,6 +3306,54 @@ export default function EditorScreen1({
   const activeSceneRef = useRef(null);
   const measureOverlayRef = useRef(null);
 
+  // Card resize state for UV editor 3D model card
+  const [cardSize, setCardSize] = useState(280);
+
+  const handleResizeMouseDown = (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startSize = cardSize;
+
+    const handleMouseMove = (moveEvent) => {
+      const deltaX = startX - moveEvent.clientX;
+      const deltaY = startY - moveEvent.clientY;
+      const newSize = Math.max(160, Math.min(500, startSize + Math.max(deltaX, deltaY)));
+      setCardSize(newSize);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleResizeTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    const startX = e.touches[0].clientX;
+    const startY = e.touches[0].clientY;
+    const startSize = cardSize;
+
+    const handleTouchMove = (moveEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      const deltaX = startX - moveEvent.touches[0].clientX;
+      const deltaY = startY - moveEvent.touches[0].clientY;
+      const newSize = Math.max(160, Math.min(500, startSize + Math.max(deltaX, deltaY)));
+      setCardSize(newSize);
+    };
+
+    const handleTouchEnd = () => {
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+
+    document.addEventListener("touchmove", handleTouchMove);
+    document.addEventListener("touchend", handleTouchEnd);
+  };
+
   useEffect(() => {
     if (baseDimensions && cameraRef.current && orbitControlsRef.current) {
       const controls = orbitControlsRef.current;
@@ -3917,10 +3974,10 @@ export default function EditorScreen1({
       {/* 3D Canvas Background */}
       <div
         id="three-canvas-container"
-        className={`absolute transition-all duration-300 ${
+        className={`absolute ${
           isUvEditing
-            ? "w-[280px] h-[280px] rounded-2xl border-4 border-white shadow-[0_16px_40px_rgba(0,0,0,0.14)] bottom-[96px] right-6 z-30 overflow-hidden bg-white"
-            : "inset-0 z-0"
+            ? "rounded-2xl border-4 border-white shadow-[0_16px_40px_rgba(0,0,0,0.14)] bottom-[148px] right-6 z-30 overflow-hidden bg-white"
+            : "inset-0 z-0 transition-all duration-300"
         }`}
         style={{
           cursor: colorBrushActive
@@ -3929,6 +3986,8 @@ export default function EditorScreen1({
               ? "grab"
               : "default",
           backgroundColor: bgColor,
+          width: isUvEditing ? `${cardSize}px` : undefined,
+          height: isUvEditing ? `${cardSize}px` : undefined,
         }}
       >
         <R3FCanvas
@@ -4087,10 +4146,10 @@ export default function EditorScreen1({
             modelUrl.toLowerCase().includes("oval") ||
             modelUrl.toLowerCase().includes("round") ||
             modelUrl.toLowerCase().includes("tamper")) && (
-            <div className={`absolute z-10 pointer-events-auto flex items-center justify-center ${
+            <div className={`absolute z-10 pointer-events-auto flex items-center justify-center left-1/2 -translate-x-1/2 ${
               isUvEditing
-                ? "top-3 left-4 transform-none"
-                : "top-[8vh] left-1/2 transform -translate-x-1/2"
+                ? "top-3"
+                : "top-[8vh]"
             }`}>
               <button
                 onClick={() => setIsLidOpen(!isLidOpen)}
@@ -4277,38 +4336,57 @@ export default function EditorScreen1({
         {/* Loading overlay sits on top of canvas */}
         {modelUrl && !isUvEditing && <ModelLoadingOverlay isLoading={isModelLoading} />}
 
-        {/* Clear UV Edits Button - Bottom Right */}
-        {modelUrl &&
-          uvEditsApplied &&
-          (Object.values(appliedTextures || {}).some(Boolean) ||
-            Object.values(appliedColors || {}).some((v) => v && v !== "none") ||
-            Object.values(appliedMaterials || {}).some(Boolean)) && (
-            <div className="absolute bottom-[2vh] right-[2vh] z-10 pointer-events-auto">
-              <button
-                onClick={() => {
-                  setShowConfirmClearUv(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-[#c0561f] hover:bg-[#fff] text-[#ffff] hover:text-[#c0561f] font-bold text-[13px] border border-[#c0561f] rounded-xl transition-all shadow-sm hover:shadow active:scale-95 cursor-pointer"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2.5}
-                  stroke="currentColor"
-                  className="w-4 h-4"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                  />
-                </svg>
-                <span>Clear UV Edits</span>
-              </button>
-            </div>
-          )}
+        {/* Card Resize Handle */}
+        {isUvEditing && (
+          <div
+            onMouseDown={handleResizeMouseDown}
+            onTouchStart={handleResizeTouchStart}
+            className="absolute top-0 left-0 w-8 h-8 cursor-nwse-resize z-50 flex items-center justify-center group"
+            title="Drag to resize preview"
+          >
+            <div className="w-3.5 h-3.5 border-t-2 border-l-2 border-gray-400 group-hover:border-gray-700 transition-colors rounded-tl-sm pointer-events-none translate-x-1 translate-y-1" />
+          </div>
+        )}
       </div>
+
+      {/* Clear UV Edits Button - Rendered outside of canvas container card */}
+      {modelUrl &&
+        uvEditsApplied &&
+        (Object.values(appliedTextures || {}).some(Boolean) ||
+          Object.values(appliedColors || {}).some((v) => v && v !== "none") ||
+          Object.values(appliedMaterials || {}).some(Boolean)) && (
+          <div 
+            className="absolute z-[35] pointer-events-auto transition-all duration-300"
+            style={
+              isUvEditing
+                ? { bottom: "96px", right: `${24 + (cardSize - 146) / 2}px` }
+                : { bottom: "2vh", right: "2vh" }
+            }
+          >
+            <button
+              onClick={() => {
+                setShowConfirmClearUv(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#c0561f] hover:bg-[#fff] text-[#ffff] hover:text-[#c0561f] font-bold text-[13px] border border-[#c0561f] rounded-xl transition-all shadow-sm hover:shadow active:scale-95 cursor-pointer"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+                className="w-4 h-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                />
+              </svg>
+              <span>Clear UV Edits</span>
+            </button>
+          </div>
+        )}
       
       {/* Embedded UV Editor Canvas & Panels */}
       <div
