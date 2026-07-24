@@ -4325,6 +4325,7 @@ export default function EditorScreen1({
           appliedTextures={appliedTextures}
           appliedLastApplied={appliedLastApplied}
           activeTab={activeTab}
+          setActiveTab={setActiveTab}
           onBack={onBackFromUv}
           isActive={isUvEditing}
           canvasResetKey={canvasResetKey}

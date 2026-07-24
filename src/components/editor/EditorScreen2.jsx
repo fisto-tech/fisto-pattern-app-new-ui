@@ -1420,7 +1420,7 @@ export default function EditorScreen2({
       });
       if (activeTab !== "text") setActiveTab("text");
       if (leftTab !== "text") setLeftTab("text");
-    } else if (layer && layer.fitType) {
+    } else if (layer) {
       if (activeTab !== "uploads") setActiveTab("uploads");
       if (leftTab !== "uploads") setLeftTab("uploads");
     }
