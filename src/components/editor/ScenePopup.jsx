@@ -282,7 +282,7 @@ export default function ScenePopup({
 
           {/* More Expand Toggle Button (Horizontal mode only) */}
           {isHorizontal && (
-            <div className="relative shrink-0 ml-auto" ref={moreRef}>
+            <div className="relative shrink-0 ml-auto">
               <button
                 onClick={() => setShowMoreControls(!showMoreControls)}
                 className={`px-3 py-1.5 rounded-xl border-2 font-bold text-[11px] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm ${
@@ -300,9 +300,9 @@ export default function ScenePopup({
           )}
         </div>
 
-        {/* Expandable Sliders Drawer (Horizontal Mode) */}
+        {/* Expandable Sliders Drawer (Horizontal Mode) — wrapped with moreRef so inside clicks don't trigger outside-click dismissal */}
         {isHorizontal && showMoreControls && (
-          <div className="border-t border-gray-200/80 p-3 bg-gray-50/50 flex items-center justify-center gap-8 w-full animate-in fade-in slide-in-from-top-2 duration-200 shrink-0">
+          <div ref={moreRef} className="border-t border-gray-200/80 p-3 bg-gray-50/50 flex items-center justify-center gap-8 w-full animate-in fade-in slide-in-from-top-2 duration-200 shrink-0">
             {/* Env intensity */}
             <div className="flex items-center gap-2 shrink-0">
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-12 shrink-0">
