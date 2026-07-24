@@ -25,6 +25,7 @@ import {
   GizmoViewport,
   TransformControls,
 } from "@react-three/drei";
+import { useNavigate } from "react-router-dom";
 import SafeEnvironment from "./SafeEnvironment";
 import * as THREE from "three";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -152,7 +153,7 @@ function FloatingPopupWrapper({
   if (!isOpen) return null;
 
   if (!multiWindow) {
-    const widthClass = (tabId === "layouts" || tabId === "layout" || tabId === "textures") ? "w-fit max-w-[95vw]" : "w-[95vw] md:w-[90vw] lg:w-[85vw] xl:w-[80vw] max-w-5xl";
+    const widthClass = (tabId === "layouts" || tabId === "layout" || tabId === "textures" || tabId === "scene") ? "w-fit max-w-[95vw] w-max" : "w-[95vw] md:w-[90vw] lg:w-[85vw] xl:w-[80vw] max-w-5xl";
     return (
       <div
         onPointerDown={onFocus}
@@ -3084,6 +3085,7 @@ export default function EditorScreen1({
   canvasResetKey,
   onLiveTextureUpdate,
 }) {
+  const navigate = useNavigate();
   const isBottleModel = useMemo(() => {
     if (!modelUrl) return false;
     const model = MODELS.find((m) => m.modelUrl === modelUrl);
