@@ -42,7 +42,7 @@ export default function ScenePopup({
   const [loadingBgImage, setLoadingBgImage] = useState(null);
   const [showMoreControls, setShowMoreControls] = useState(false);
   const moreRef = useRef(null);
-  
+
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (moreRef.current && !moreRef.current.contains(e.target)) {
@@ -135,11 +135,11 @@ export default function ScenePopup({
       </div>
 
       <div className={isHorizontal ? "flex flex-col w-full" : "p-5 overflow-y-auto flex-1 flex flex-col gap-6 scroll-smooth"} style={{ scrollBehavior: 'smooth' }}>
-        
+
         {/* Primary Row for Horizontal Mode or Standard Layout */}
         <div className={isHorizontal ? "flex items-center gap-6 overflow-x-auto no-scrollbar py-2.5 px-4.5" : "flex flex-col gap-6"}>
           {/* Background Color */}
-          <div className={`flex ${isHorizontal ? 'items-center gap-3 shrink-0' : 'flex-col gap-3'}`}>
+          <div className={isHorizontal ? 'flex items-center gap-3 shrink-0 bg-gray-50 border border-gray-200/80 rounded-xl px-3 py-1.5' : 'flex flex-col gap-3'}>
             <label className="text-[11px] font-bold text-gray-700 flex flex-col shrink-0 justify-between">
               <span>Color</span>
               {!isHorizontal && <span className="text-gray-400 font-normal">{bgColor}</span>}
@@ -149,9 +149,9 @@ export default function ScenePopup({
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-500 absolute z-0 group-hover:scale-110 transition-transform">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 11.25l1.5 1.5.75-.75V8.758l2.276-.61a3 3 0 10-3.675-3.675l-.61 2.277H12l-.75.75 1.5 1.5M15 11.25v-2.25m0 2.25l-2.25 1.5M7.5 15l-1.5 1.5-.75-.75V12.5l2.25-1.5M7.5 15l1.5 2.25m0-2.25l-2.25-1.5M10.5 18l-1.5 1.5-.75-.75V15.5l2.25-1.5M10.5 18l1.5 2.25m0-2.25l-2.25-1.5" />
                 </svg>
-                <input 
-                  type="color" 
-                  value={bgColor} 
+                <input
+                  type="color"
+                  value={bgColor}
                   onChange={(e) => setBgColor(e.target.value)}
                   className="absolute inset-0 w-[200%] h-[200%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0 z-10"
                 />
@@ -173,11 +173,11 @@ export default function ScenePopup({
           </div>
 
           {/* Custom Background Image */}
-          <div className={`flex ${isHorizontal ? 'items-center gap-3 shrink-0' : 'flex-col gap-3'}`}>
+          <div className={isHorizontal ? 'flex items-center gap-3 shrink-0 bg-gray-50 border border-gray-200/80 rounded-xl px-3 py-1.5' : 'flex flex-col gap-3'}>
             <label className="text-[11px] font-bold text-gray-700 shrink-0">Bg Image</label>
             <div className={isHorizontal ? "flex items-center gap-1.5" : "grid grid-cols-4 gap-2 mb-2"}>
               {defaultBgImages.slice(0, isHorizontal ? 5 : 10).map((bg, index) => (
-                <div 
+                <div
                   key={index}
                   onClick={() => handleApplyDefaultBg(bg)}
                   className={`relative w-8 h-8 rounded border cursor-pointer overflow-hidden shrink-0 group ${bgImage === bg ? 'border-[#c05520]' : 'border-gray-200 hover:border-gray-300'}`}
@@ -198,11 +198,11 @@ export default function ScenePopup({
                 </div>
               ))}
             </div>
-            
+
             {bgImage ? (
               <div className={`flex items-center justify-between p-1.5 rounded-lg border border-[#c05520] bg-orange-50 shrink-0 ${isHorizontal ? 'gap-2' : 'gap-3 p-3'}`}>
                 <div className="flex items-center gap-2">
-                  <div 
+                  <div
                     className="w-6 h-6 rounded shadow-inner bg-cover bg-center border border-gray-200"
                     style={{ backgroundImage: `url(${bgImage})` }}
                   />
@@ -212,8 +212,8 @@ export default function ScenePopup({
                     </div>
                   )}
                 </div>
-                <button 
-                  onClick={() => setBgImage(null)} 
+                <button
+                  onClick={() => setBgImage(null)}
                   className="w-5 h-5 rounded-full bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center border border-gray-200 transition-colors cursor-pointer shadow-sm"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
@@ -233,9 +233,9 @@ export default function ScenePopup({
           </div>
 
           {/* HDRI Preset */}
-          <div className={`flex ${isHorizontal ? 'items-center gap-3 shrink-0' : 'flex-col gap-3'}`}>
+          <div className={isHorizontal ? 'flex items-center gap-3 shrink-0 bg-gray-50 border border-gray-200/80 rounded-xl px-3 py-1.5' : 'flex flex-col gap-3'}>
             <label className="text-[11px] font-bold text-gray-700 shrink-0">HDRI</label>
-            
+
             {customHdri ? (
               <div className={`flex items-center justify-between p-1.5 rounded-lg border border-[#c05520] bg-orange-50 shrink-0 ${isHorizontal ? 'gap-2' : 'gap-3 p-3'}`}>
                 <div className="flex items-center gap-2">
@@ -244,8 +244,8 @@ export default function ScenePopup({
                   </div>
                   {!isHorizontal && <span className="text-xs font-bold text-gray-800">Custom HDR</span>}
                 </div>
-                <button 
-                  onClick={() => { setCustomHdri(null); setHdriPreset("studio"); }} 
+                <button
+                  onClick={() => { setCustomHdri(null); setHdriPreset("city"); }}
                   className="w-5 h-5 rounded-full bg-white hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center border border-gray-200 transition-colors cursor-pointer shadow-sm"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
@@ -255,8 +255,8 @@ export default function ScenePopup({
               </div>
             ) : (
               <div className={`flex ${isHorizontal ? 'items-center gap-2 shrink-0' : 'flex-col gap-2'}`}>
-                <select 
-                  value={hdriPreset} 
+                <select
+                  value={hdriPreset}
                   onChange={(e) => {
                     setHdriPreset(e.target.value);
                     if (e.target.value !== "custom") setCustomHdri(null);
@@ -285,11 +285,10 @@ export default function ScenePopup({
             <div className="relative shrink-0 ml-auto">
               <button
                 onClick={() => setShowMoreControls(!showMoreControls)}
-                className={`px-3 py-1.5 rounded-xl border-2 font-bold text-[11px] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm ${
-                  showMoreControls 
-                    ? 'border-[#c05520] bg-orange-50 text-[#c05520]' 
+                className={`px-3 py-1.5 rounded-xl border-2 font-bold text-[11px] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm ${showMoreControls
+                    ? 'border-[#c05520] bg-orange-50 text-[#c05520]'
                     : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'
-                }`}
+                  }`}
               >
                 <span>More</span>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-3.5 h-3.5 transition-transform duration-200 ${showMoreControls ? 'rotate-180' : ''}`}>
@@ -308,9 +307,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-12 shrink-0">
                 Env <span>{envIntensity.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="2" step="0.1" 
-                value={envIntensity} 
+              <input
+                type="range" min="0" max="2" step="0.1"
+                value={envIntensity}
                 onChange={(e) => setEnvIntensity(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-24 cursor-pointer"
               />
@@ -321,9 +320,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-16 shrink-0">
                 Ambient <span>{ambLight.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="2" step="0.1" 
-                value={ambLight} 
+              <input
+                type="range" min="0" max="2" step="0.1"
+                value={ambLight}
                 onChange={(e) => setAmbLight(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-24 cursor-pointer"
               />
@@ -334,9 +333,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-16 shrink-0">
                 Dir Light <span>{dirLight.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="3" step="0.1" 
-                value={dirLight} 
+              <input
+                type="range" min="0" max="3" step="0.1"
+                value={dirLight}
                 onChange={(e) => setDirLight(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-24 cursor-pointer"
               />
@@ -347,9 +346,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-16 shrink-0">
                 Shadow <span>{shadowOpacity.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="1" step="0.05" 
-                value={shadowOpacity} 
+              <input
+                type="range" min="0" max="1" step="0.05"
+                value={shadowOpacity}
                 onChange={(e) => setShadowOpacity(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-24 cursor-pointer"
               />
@@ -364,9 +363,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-full">
                 Env <span>{envIntensity.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="2" step="0.1" 
-                value={envIntensity} 
+              <input
+                type="range" min="0" max="2" step="0.1"
+                value={envIntensity}
                 onChange={(e) => setEnvIntensity(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-full"
               />
@@ -376,9 +375,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-full">
                 Ambient <span>{ambLight.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="2" step="0.1" 
-                value={ambLight} 
+              <input
+                type="range" min="0" max="2" step="0.1"
+                value={ambLight}
                 onChange={(e) => setAmbLight(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-full"
               />
@@ -388,9 +387,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-full">
                 Dir Light <span>{dirLight.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="3" step="0.1" 
-                value={dirLight} 
+              <input
+                type="range" min="0" max="3" step="0.1"
+                value={dirLight}
                 onChange={(e) => setDirLight(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-full"
               />
@@ -400,9 +399,9 @@ export default function ScenePopup({
               <label className="text-[10px] font-bold text-gray-600 flex justify-between gap-1 w-full">
                 Shadow <span>{shadowOpacity.toFixed(1)}</span>
               </label>
-              <input 
-                type="range" min="0" max="1" step="0.05" 
-                value={shadowOpacity} 
+              <input
+                type="range" min="0" max="1" step="0.05"
+                value={shadowOpacity}
                 onChange={(e) => setShadowOpacity(parseFloat(e.target.value))}
                 className="accent-[#c05520] w-full"
               />

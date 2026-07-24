@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import Canvas from "./Canvas";
 import RightPanel from "./RightPanel";
@@ -840,14 +841,45 @@ const loadFont = (fontFamily) => {
   }
 };
 
+
+
 const FontSelect = ({ value, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const wrapperRef = useRef(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  const updateCoords = () => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      window.addEventListener("resize", updateCoords);
+      window.addEventListener("scroll", updateCoords);
+    }
+    return () => {
+      window.removeEventListener("resize", updateCoords);
+      window.removeEventListener("scroll", updateCoords);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        // Also check if click is inside the portalized dropdown itself
+        const portalDropdown = document.getElementById("portal-font-dropdown");
+        if (portalDropdown && portalDropdown.contains(e.target)) {
+          return;
+        }
         setIsOpen(false);
       }
     };
@@ -861,7 +893,6 @@ const FontSelect = ({ value, onChange }) => {
 
   useEffect(() => {
     if (isOpen) {
-      // Preload all fonts so they render correctly in the dropdown list
       GOOGLE_FONTS.forEach((font) => loadFont(`"${font}", sans-serif`));
     }
   }, [isOpen]);
@@ -895,60 +926,71 @@ const FontSelect = ({ value, onChange }) => {
         </svg>
       </div>
 
-      {isOpen && (
-        <div className="absolute z-50 bottom-full mb-1 w-full bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden flex flex-col max-h-[300px]">
-          <div className="p-2 border-b border-gray-100 shrink-0 bg-gray-50/50">
-            <div className="relative">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-3.5 h-3.5 text-gray-800 absolute left-2.5 top-1/2 -translate-y-1/2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+      {isOpen &&
+        createPortal(
+          <div
+            id="portal-font-dropdown"
+            className="fixed z-[99999] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.16)] border border-gray-100 overflow-hidden flex flex-col max-h-[250px]"
+            style={{
+              top: `${coords.top - 6}px`,
+              left: `${coords.left}px`,
+              width: `${coords.width}px`,
+              transform: "translateY(-100%)",
+            }}
+          >
+            <div className="p-2 border-b border-gray-100 shrink-0 bg-gray-50/50">
+              <div className="relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-3.5 h-3.5 text-gray-800 absolute left-2.5 top-1/2 -translate-y-1/2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
+                </svg>
+                <input
+                  autoFocus
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search fonts..."
+                  className="w-full bg-white border border-gray-200 rounded-lg py-1.5 pl-8 pr-3 text-sm focus:outline-none focus:border-[#c0623a] transition-colors"
                 />
-              </svg>
-              <input
-                autoFocus
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search fonts..."
-                className="w-full bg-white border border-gray-200 rounded-lg py-1.5 pl-8 pr-3 text-sm focus:outline-none focus:border-[#c0623a] transition-colors"
-              />
+              </div>
             </div>
-          </div>
-          <div className="overflow-y-auto flex-1 p-1">
-            {filteredFonts.map((font) => (
-              <div
-                key={font}
-                onClick={() => {
-                  const fontVal = `"${font}", sans-serif`;
-                  loadFont(fontVal);
-                  onChange(fontVal);
-                  setIsOpen(false);
-                  setSearch("");
-                }}
-                onMouseEnter={() => loadFont(`"${font}", sans-serif`)}
-                className="px-3 py-2 text-sm text-gray-700 hover:bg-[#fff5f0] hover:text-[#c0623a] rounded-lg cursor-pointer transition-colors"
-                style={{ fontFamily: `"${font}", sans-serif` }}
-              >
-                {font}
-              </div>
-            ))}
-            {filteredFonts.length === 0 && (
-              <div className="px-3 py-4 text-sm text-gray-800 text-center">
-                No fonts found
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+            <div className="overflow-y-auto flex-1 p-1">
+              {filteredFonts.map((font) => (
+                <div
+                  key={font}
+                  onClick={() => {
+                    const fontVal = `"${font}", sans-serif`;
+                    loadFont(fontVal);
+                    onChange(fontVal);
+                    setIsOpen(false);
+                    setSearch("");
+                  }}
+                  onMouseEnter={() => loadFont(`"${font}", sans-serif`)}
+                  className="px-3 py-2 text-sm text-gray-700 hover:bg-[#fff5f0] hover:text-[#c0623a] rounded-lg cursor-pointer transition-colors"
+                  style={{ fontFamily: `"${font}", sans-serif` }}
+                >
+                  {font}
+                </div>
+              ))}
+              {filteredFonts.length === 0 && (
+                <div className="px-3 py-4 text-sm text-gray-800 text-center">
+                  No fonts found
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };
@@ -2976,7 +3018,7 @@ export default function EditorScreen2({
 
       {/* Confirmation Modal */}
       {showCancelConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-gray-100 flex flex-col items-center text-center">
             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#dc2626" className="w-6 h-6">

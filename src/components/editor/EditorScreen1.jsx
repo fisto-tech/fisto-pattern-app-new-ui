@@ -3128,7 +3128,7 @@ export default function EditorScreen1({
   }, [modelUrl]);
   const textureScrollRef = useRef(null);
   const [showTools, setShowTools] = useState(false);
-  
+
   const [popupPositions, setPopupPositions] = useState({
     models: { x: -380, y: -80 },
     layout: { x: -380, y: 120 },
@@ -3974,11 +3974,10 @@ export default function EditorScreen1({
       {/* 3D Canvas Background */}
       <div
         id="three-canvas-container"
-        className={`absolute ${
-          isUvEditing
+        className={`absolute ${isUvEditing
             ? "rounded-2xl border-4 border-white shadow-[0_16px_40px_rgba(0,0,0,0.14)] bottom-[148px] right-6 z-30 overflow-hidden bg-white"
             : "inset-0 z-0 transition-all duration-300"
-        }`}
+          }`}
         style={{
           cursor: colorBrushActive
             ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='5' fill='${encodeURIComponent(brushColor)}' stroke='white' stroke-width='1'/%3E%3Cpath d='M12 2v4M12 18v4M2 12h4M18 12h4' stroke='%23333' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") 16 16, crosshair`
@@ -4146,18 +4145,16 @@ export default function EditorScreen1({
             modelUrl.toLowerCase().includes("oval") ||
             modelUrl.toLowerCase().includes("round") ||
             modelUrl.toLowerCase().includes("tamper")) && (
-            <div className={`absolute z-10 pointer-events-auto flex items-center justify-center left-1/2 -translate-x-1/2 ${
-              isUvEditing
+            <div className={`absolute z-10 pointer-events-auto flex items-center justify-center left-1/2 -translate-x-1/2 ${isUvEditing
                 ? "top-3"
                 : "top-[8vh]"
-            }`}>
+              }`}>
               <button
                 onClick={() => setIsLidOpen(!isLidOpen)}
-                className={`flex items-center gap-1.5 transition-all border-none cursor-pointer ${
-                  isUvEditing
+                className={`flex items-center gap-1.5 transition-all border-none cursor-pointer ${isUvEditing
                     ? "bg-white/90 backdrop-blur-sm text-gray-700 hover:text-[#c05520] text-[11px] font-extrabold px-2.5 py-1.5 rounded-xl shadow-sm border border-gray-200/60 hover:scale-105 active:scale-95"
                     : "bg-transparent text-gray-700 font-medium text-[15px] hover:text-[#c05520]"
-                }`}
+                  }`}
               >
                 {isLidOpen ? (
                   <>
@@ -4355,7 +4352,7 @@ export default function EditorScreen1({
         (Object.values(appliedTextures || {}).some(Boolean) ||
           Object.values(appliedColors || {}).some((v) => v && v !== "none") ||
           Object.values(appliedMaterials || {}).some(Boolean)) && (
-          <div 
+          <div
             className="absolute z-[35] pointer-events-auto transition-all duration-300"
             style={
               isUvEditing
@@ -4387,7 +4384,7 @@ export default function EditorScreen1({
             </button>
           </div>
         )}
-      
+
       {/* Embedded UV Editor Canvas & Panels */}
       <div
         className="absolute inset-0 z-10 bg-[#f5efe6] flex flex-col overflow-hidden transition-all duration-300"
@@ -4688,23 +4685,23 @@ export default function EditorScreen1({
             (appliedColors && Object.keys(appliedColors).length > 0) ||
             (appliedMaterials && Object.keys(appliedMaterials).length > 0)
           ) && (
-            <div className="bg-white/90 backdrop-blur-md rounded-xl px-3 py-1.5 border border-gray-100/80 shadow-sm flex items-center gap-2">
-              <span
-                className="text-xs font-semibold text-gray-600 select-none cursor-pointer whitespace-nowrap"
-                onClick={() => setShowDefaultLabels(!showDefaultLabels)}
-              >
-                Labels
-              </span>
-              <div
-                onClick={() => setShowDefaultLabels(!showDefaultLabels)}
-                className={`w-9 h-5 flex shrink-0 items-center rounded-full p-0.5 cursor-pointer transition-colors ${showDefaultLabels ? "bg-[#c05520]" : "bg-gray-300"}`}
-              >
+              <div className="bg-white/90 backdrop-blur-md rounded-xl px-3 py-1.5 border border-gray-100/80 shadow-sm flex items-center gap-2">
+                <span
+                  className="text-xs font-semibold text-gray-600 select-none cursor-pointer whitespace-nowrap"
+                  onClick={() => setShowDefaultLabels(!showDefaultLabels)}
+                >
+                  Labels
+                </span>
                 <div
-                  className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${showDefaultLabels ? "translate-x-4" : ""}`}
-                />
+                  onClick={() => setShowDefaultLabels(!showDefaultLabels)}
+                  className={`w-9 h-5 flex shrink-0 items-center rounded-full p-0.5 cursor-pointer transition-colors ${showDefaultLabels ? "bg-[#c05520]" : "bg-gray-300"}`}
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${showDefaultLabels ? "translate-x-4" : ""}`}
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            )}
           <button
             onClick={() => setShowSaveModal(true)}
             className="px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-gray-100/80 shadow-sm text-gray-800 hover:text-[#c05520] font-bold text-xs cursor-pointer transition-all"
@@ -5035,7 +5032,7 @@ export default function EditorScreen1({
           )}
 
           <div className={!multiWindow ? "flex-1 overflow-x-auto no-scrollbar py-1 flex items-center gap-6 min-w-0" : "flex-1 overflow-y-auto pr-1 pb-6 flex flex-col gap-4"}>
-            
+
             {/* Texture Category Selector */}
             <div className={`flex shrink-0 ${!multiWindow ? 'items-center gap-3.5' : 'flex-col gap-2'}`}>
               <div className="flex items-center gap-2">
@@ -5147,135 +5144,135 @@ export default function EditorScreen1({
 
       {!isUvEditing && (
         <div className="editor-right-tools absolute right-[1.5vw] top-24 z-10 bg-white rounded-full p-2 shadow-lg flex flex-col gap-[0.6vw]">
-        <Tooltip1 label="Select" side="left">
-          <button
-            onClick={() => handleSetToolMode("cursor")}
-            className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${toolMode === "cursor"
-              ? "bg-gray-900 hover:bg-gray-700"
-              : "bg-transparent hover:bg-gray-100"
-              }`}
-          >
-            <img
-              src={cursorIcon}
-              alt="Cursor"
-              className={`w-[1.1vw] h-[1.1vw] object-contain ${toolMode === "cursor" ? "invert brightness-0 saturate-100" : ""}`}
-            />
-          </button>
-        </Tooltip1>
-        <Tooltip1 label="Hand" side="left">
-          <button
-            onClick={() => handleSetToolMode("hand")}
-            className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${toolMode === "hand"
-              ? "bg-gray-900 hover:bg-gray-700"
-              : "bg-transparent hover:bg-gray-100"
-              }`}
-          >
-            <img
-              src={handIcon}
-              alt="Hand"
-              className={`w-[1.1vw] h-[1.1vw] object-contain ${toolMode === "hand" ? "invert brightness-0 saturate-100" : ""}`}
-            />
-          </button>
-        </Tooltip1>
+          <Tooltip1 label="Select" side="left">
+            <button
+              onClick={() => handleSetToolMode("cursor")}
+              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${toolMode === "cursor"
+                ? "bg-gray-900 hover:bg-gray-700"
+                : "bg-transparent hover:bg-gray-100"
+                }`}
+            >
+              <img
+                src={cursorIcon}
+                alt="Cursor"
+                className={`w-[1.1vw] h-[1.1vw] object-contain ${toolMode === "cursor" ? "invert brightness-0 saturate-100" : ""}`}
+              />
+            </button>
+          </Tooltip1>
+          <Tooltip1 label="Hand" side="left">
+            <button
+              onClick={() => handleSetToolMode("hand")}
+              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${toolMode === "hand"
+                ? "bg-gray-900 hover:bg-gray-700"
+                : "bg-transparent hover:bg-gray-100"
+                }`}
+            >
+              <img
+                src={handIcon}
+                alt="Hand"
+                className={`w-[1.1vw] h-[1.1vw] object-contain ${toolMode === "hand" ? "invert brightness-0 saturate-100" : ""}`}
+              />
+            </button>
+          </Tooltip1>
 
-        <div className="w-6 h-px bg-gray-200 mx-auto" />
+          <div className="w-6 h-px bg-gray-200 mx-auto" />
 
-        <Tooltip1 label="Reset Position" side="left">
-          <button
-            onClick={() => {
-              if (orbitControlsRef.current && cameraRef.current) {
-                const controls = orbitControlsRef.current;
-                const camera = cameraRef.current;
+          <Tooltip1 label="Reset Position" side="left">
+            <button
+              onClick={() => {
+                if (orbitControlsRef.current && cameraRef.current) {
+                  const controls = orbitControlsRef.current;
+                  const camera = cameraRef.current;
 
-                const savedConfig =
-                  modelPositionsConfig && modelPositionsConfig[modelUrl];
+                  const savedConfig =
+                    modelPositionsConfig && modelPositionsConfig[modelUrl];
 
-                if (savedConfig) {
-                  const { target, azimuth, polar, distance } = savedConfig;
-                  controls.target.set(target[0], target[1], target[2]);
-                  const spherical = new THREE.Spherical(
-                    distance || 4 / 0.6,
-                    polar,
-                    azimuth,
-                  );
-                  spherical.makeSafe();
-                  const offsetVec = new THREE.Vector3().setFromSpherical(
-                    spherical,
-                  );
-                  camera.position.copy(controls.target).add(offsetVec);
-                  camera.lookAt(controls.target);
-                  controls.setAzimuthalAngle(azimuth);
-                  controls.setPolarAngle(polar);
+                  if (savedConfig) {
+                    const { target, azimuth, polar, distance } = savedConfig;
+                    controls.target.set(target[0], target[1], target[2]);
+                    const spherical = new THREE.Spherical(
+                      distance || 4 / 0.6,
+                      polar,
+                      azimuth,
+                    );
+                    spherical.makeSafe();
+                    const offsetVec = new THREE.Vector3().setFromSpherical(
+                      spherical,
+                    );
+                    camera.position.copy(controls.target).add(offsetVec);
+                    camera.lookAt(controls.target);
+                    controls.setAzimuthalAngle(azimuth);
+                    controls.setPolarAngle(polar);
 
-                  const calculatedZoom = Math.round((4 / distance) * 100);
-                  setZoomPercent(calculatedZoom || 60);
-                } else {
-                  setZoomPercent(60);
-                  const targetY = getModelCenterY();
-                  controls.target.set(0, targetY, 0);
-                  camera.position.set(0, targetY, 4 / 0.6);
-                  camera.lookAt(0, targetY, 0);
-                  controls.setAzimuthalAngle(0);
-                  controls.setPolarAngle(Math.PI / 2);
+                    const calculatedZoom = Math.round((4 / distance) * 100);
+                    setZoomPercent(calculatedZoom || 60);
+                  } else {
+                    setZoomPercent(60);
+                    const targetY = getModelCenterY();
+                    controls.target.set(0, targetY, 0);
+                    camera.position.set(0, targetY, 4 / 0.6);
+                    camera.lookAt(0, targetY, 0);
+                    controls.setAzimuthalAngle(0);
+                    controls.setPolarAngle(Math.PI / 2);
+                  }
+                  controls.update();
                 }
-                controls.update();
-              }
-              setToolMode("cursor");
-            }}
-            className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.8}
-              stroke="currentColor"
-              className="w-[1.1vw] h-[1.1vw]"
+                setToolMode("cursor");
+              }}
+              className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 2.25v1.5m0 16.5v1.5m-9.75-9.75h1.5m16.5 0h1.5"
-              />
-            </svg>
-          </button>
-        </Tooltip1>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+                className="w-[1.1vw] h-[1.1vw]"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 2.25v1.5m0 16.5v1.5m-9.75-9.75h1.5m16.5 0h1.5"
+                />
+              </svg>
+            </button>
+          </Tooltip1>
 
-        <Tooltip1 label="Reset All Edits" side="left">
-          <button
-            onClick={() => {
-              if (onResetAll) onResetAll();
-              if (baseDimensions) setCustomSizeInput(baseDimensions);
-              setToolMode("cursor");
-            }}
-            className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-red-50 hover:text-red-500 cursor-pointer text-gray-600 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.8}
-              stroke="currentColor"
-              className="w-[1.1vw] h-[1.1vw]"
+          <Tooltip1 label="Reset All Edits" side="left">
+            <button
+              onClick={() => {
+                if (onResetAll) onResetAll();
+                if (baseDimensions) setCustomSizeInput(baseDimensions);
+                setToolMode("cursor");
+              }}
+              className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-red-50 hover:text-red-500 cursor-pointer text-gray-600 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-              />
-            </svg>
-          </button>
-        </Tooltip1>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.8}
+                stroke="currentColor"
+                className="w-[1.1vw] h-[1.1vw]"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                />
+              </svg>
+            </button>
+          </Tooltip1>
 
-        {!showTools && (
-          <>
-            <div className="w-6 h-px bg-gray-200 mx-auto" />
-            <style>{`
+          {!showTools && (
+            <>
+              <div className="w-6 h-px bg-gray-200 mx-auto" />
+              <style>{`
               @keyframes bounce-down {
                 0%, 100% { transform: translateY(0); }
                 50% { transform: translateY(3px); }
@@ -5478,296 +5475,296 @@ export default function EditorScreen1({
                   font-size: 0.8vw !important;
                 }
               `}</style>
-            <button
-              onClick={() => setShowTools(true)}
-              className="w-full rounded-full flex items-center justify-center border-none bg-transparent hover:bg-orange-50 text-[#c05520] cursor-pointer transition-colors p-1"
-              title="More Tools"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.5}
-                stroke="currentColor"
-                className="w-4 h-4 animate-bounce-down"
+              <button
+                onClick={() => setShowTools(true)}
+                className="w-full rounded-full flex items-center justify-center border-none bg-transparent hover:bg-orange-50 text-[#c05520] cursor-pointer transition-colors p-1"
+                title="More Tools"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-              </svg>
-            </button>
-          </>
-        )}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                  stroke="currentColor"
+                  className="w-4 h-4 animate-bounce-down"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+            </>
+          )}
 
-        {/* Collapsible Container for Remaining Tools */}
-        <div
-          className={`transition-all duration-300 flex flex-col gap-[0.6vw] items-center w-full ${showTools
-            ? "max-h-[1000px] opacity-100 mt-1 overflow-visible"
-            : "max-h-0 opacity-0 pointer-events-none overflow-hidden"
-            }`}
-        >
-          <Tooltip1 label="Undo" side="left">
-            <button
-              onClick={onUndo}
-              disabled={!canUndo}
-              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none transition-colors ${canUndo ? "bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600" : "bg-transparent text-gray-300 cursor-not-allowed"}`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
+          {/* Collapsible Container for Remaining Tools */}
+          <div
+            className={`transition-all duration-300 flex flex-col gap-[0.6vw] items-center w-full ${showTools
+              ? "max-h-[1000px] opacity-100 mt-1 overflow-visible"
+              : "max-h-0 opacity-0 pointer-events-none overflow-hidden"
+              }`}
+          >
+            <Tooltip1 label="Undo" side="left">
+              <button
+                onClick={onUndo}
+                disabled={!canUndo}
+                className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none transition-colors ${canUndo ? "bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600" : "bg-transparent text-gray-300 cursor-not-allowed"}`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
 
-          <Tooltip1 label="Redo" side="left">
-            <button
-              onClick={onRedo}
-              disabled={!canRedo}
-              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none transition-colors ${canRedo ? "bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600" : "bg-transparent text-gray-300 cursor-not-allowed"}`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
+            <Tooltip1 label="Redo" side="left">
+              <button
+                onClick={onRedo}
+                disabled={!canRedo}
+                className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none transition-colors ${canRedo ? "bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600" : "bg-transparent text-gray-300 cursor-not-allowed"}`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
 
-          <Tooltip1 label="Zoom In" side="left">
-            <button
-              onClick={() => handleZoom(10)}
-              className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600 transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
+            <Tooltip1 label="Zoom In" side="left">
+              <button
+                onClick={() => handleZoom(10)}
+                className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600 transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
 
-          <div className="text-[11px] font-bold text-gray-400 text-center w-full select-none">
-            {zoomPercent}%
+            <div className="text-[11px] font-bold text-gray-400 text-center w-full select-none">
+              {zoomPercent}%
+            </div>
+
+            <Tooltip1 label="Zoom Out" side="left">
+              <button
+                onClick={() => handleZoom(-10)}
+                className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13.5 10.5h-6"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
+
+            <div className="w-6 h-px bg-gray-200 mx-auto" />
+
+            <Tooltip1
+              label={shadowEnabled ? "Shadow Off" : "Shadow On"}
+              side="left"
+            >
+              <button
+                onClick={() => setShadowEnabled((s) => !s)}
+                className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${shadowEnabled
+                  ? "bg-gray-900 text-white hover:bg-gray-700"
+                  : "bg-transparent text-gray-500 hover:bg-gray-100"
+                  }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
+
+            <div className="w-6 h-px bg-gray-200 mx-auto" />
+
+            <Tooltip1 label="Measurements" side="left">
+              <button
+                onClick={() => {
+                  setShowMeasurements((m) => {
+                    const nextVal = !m;
+                    if (nextVal && setActiveTab) {
+                      setActiveTab(null);
+                    }
+                    return nextVal;
+                  });
+                }}
+                className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${showMeasurements
+                  ? "bg-gray-900 text-white hover:bg-gray-700"
+                  : "bg-transparent text-gray-500 hover:bg-gray-100"
+                  }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19.5 12h-15m0 0v1.5m0-1.5v-1.5m15 1.5v1.5m0-1.5v-1.5m-12 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18h12a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3Z"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
+
+            <div className="w-6 h-px bg-gray-200 mx-auto" />
+
+            <Tooltip1
+              label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              side="left"
+            >
+              <button
+                onClick={toggleFullscreen}
+                className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${isFullscreen
+                  ? "bg-gray-900 text-white hover:bg-gray-700"
+                  : "bg-transparent text-gray-500 hover:bg-gray-100"
+                  }`}
+              >
+                {isFullscreen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.8}
+                    stroke="currentColor"
+                    className="w-[1.1vw] h-[1.1vw]"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9V4.5M15 9h4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.8}
+                    stroke="currentColor"
+                    className="w-[1.1vw] h-[1.1vw]"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0l-6-6"
+                    />
+                  </svg>
+                )}
+              </button>
+            </Tooltip1>
+
+            <div className="w-6 h-px bg-gray-200 mx-auto" />
+
+            <Tooltip1 label="Help & Controls" side="left">
+              <button
+                onClick={() => setShowLegend(!showLegend)}
+                className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${showLegend
+                  ? "bg-gray-900 text-white hover:bg-gray-700"
+                  : "bg-transparent text-gray-500 hover:bg-gray-100"
+                  }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
+
+            <div className="w-6 h-px bg-gray-200 mx-auto" />
+
+            {/* Close Tools Button (Shown as Last Item) */}
+            <Tooltip1 label="Close Tools" side="left">
+              <button
+                onClick={() => setShowTools(false)}
+                className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-orange-50 text-[#c05520] cursor-pointer transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                  stroke="currentColor"
+                  className="w-[1.1vw] h-[1.1vw]"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m4.5 15.75 7.5-7.5 7.5 7.5"
+                  />
+                </svg>
+              </button>
+            </Tooltip1>
           </div>
-
-          <Tooltip1 label="Zoom Out" side="left">
-            <button
-              onClick={() => handleZoom(-10)}
-              className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-gray-100 cursor-pointer text-gray-600 transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13.5 10.5h-6"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
-
-          <div className="w-6 h-px bg-gray-200 mx-auto" />
-
-          <Tooltip1
-            label={shadowEnabled ? "Shadow Off" : "Shadow On"}
-            side="left"
-          >
-            <button
-              onClick={() => setShadowEnabled((s) => !s)}
-              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${shadowEnabled
-                ? "bg-gray-900 text-white hover:bg-gray-700"
-                : "bg-transparent text-gray-500 hover:bg-gray-100"
-                }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
-
-          <div className="w-6 h-px bg-gray-200 mx-auto" />
-
-          <Tooltip1 label="Measurements" side="left">
-            <button
-              onClick={() => {
-                setShowMeasurements((m) => {
-                  const nextVal = !m;
-                  if (nextVal && setActiveTab) {
-                    setActiveTab(null);
-                  }
-                  return nextVal;
-                });
-              }}
-              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${showMeasurements
-                ? "bg-gray-900 text-white hover:bg-gray-700"
-                : "bg-transparent text-gray-500 hover:bg-gray-100"
-                }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.5 12h-15m0 0v1.5m0-1.5v-1.5m15 1.5v1.5m0-1.5v-1.5m-12 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5m3 1.5v-1.5"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18h12a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3Z"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
-
-          <div className="w-6 h-px bg-gray-200 mx-auto" />
-
-          <Tooltip1
-            label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            side="left"
-          >
-            <button
-              onClick={toggleFullscreen}
-              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${isFullscreen
-                ? "bg-gray-900 text-white hover:bg-gray-700"
-                : "bg-transparent text-gray-500 hover:bg-gray-100"
-                }`}
-            >
-              {isFullscreen ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.8}
-                  stroke="currentColor"
-                  className="w-[1.1vw] h-[1.1vw]"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9V4.5M15 9h4.5M15 9l5.25-5.25M15 15v4.5M15 15h4.5M15 15l5.25 5.25"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.8}
-                  stroke="currentColor"
-                  className="w-[1.1vw] h-[1.1vw]"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0l-6-6"
-                  />
-                </svg>
-              )}
-            </button>
-          </Tooltip1>
-
-          <div className="w-6 h-px bg-gray-200 mx-auto" />
-
-          <Tooltip1 label="Help & Controls" side="left">
-            <button
-              onClick={() => setShowLegend(!showLegend)}
-              className={`w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${showLegend
-                ? "bg-gray-900 text-white hover:bg-gray-700"
-                : "bg-transparent text-gray-500 hover:bg-gray-100"
-                }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
-
-          <div className="w-6 h-px bg-gray-200 mx-auto" />
-
-          {/* Close Tools Button (Shown as Last Item) */}
-          <Tooltip1 label="Close Tools" side="left">
-            <button
-              onClick={() => setShowTools(false)}
-              className="w-[1.8vw] h-[1.8vw] rounded-full flex items-center justify-center border-none bg-transparent hover:bg-orange-50 text-[#c05520] cursor-pointer transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.5}
-                stroke="currentColor"
-                className="w-[1.1vw] h-[1.1vw]"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m4.5 15.75 7.5-7.5 7.5 7.5"
-                />
-              </svg>
-            </button>
-          </Tooltip1>
         </div>
-      </div>
       )}
 
       {/* Floating Right Side Cap Selector (Only for Bottle Models when in Edit mode) */}

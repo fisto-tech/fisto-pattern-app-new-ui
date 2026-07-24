@@ -9,7 +9,7 @@ export default function GalleryPopup({ onLoadScene, isScaledUp, onToggleScale, o
 
   const uniqueScenes = scenes.filter((scene, index, self) =>
     self.findIndex((s) => s.id === scene.id || (s.name === scene.name && s.modelUrl === scene.modelUrl)) === index
-  );
+  ).reverse();
 
   useEffect(() => {
     loadSavedScenes();

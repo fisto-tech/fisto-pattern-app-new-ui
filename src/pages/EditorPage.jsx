@@ -63,7 +63,7 @@ export default function EditorPage() {
   const [sceneBgImage, setSceneBgImage] = useState(null);
 
   // Lifted environment and lighting states
-  const [hdriPreset, setHdriPreset] = useState("studio");
+  const [hdriPreset, setHdriPreset] = useState("city");
   const [envIntensity, setEnvIntensity] = useState(0.4);
   const [ambLight, setAmbLight] = useState(0.3);
   const [dirLight, setDirLight] = useState(0.8);
