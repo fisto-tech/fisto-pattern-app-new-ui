@@ -5,7 +5,7 @@ import RightPanel from "./RightPanel";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import * as THREE from "three";
-import UploadsPopup from "./UploadsPopup";
+import UploadsPopup, { DEFAULT_ASSET_COLLECTIONS } from "./UploadsPopup";
 import TapeLayoutScreen from "./TapeLayoutScreen";
 
 // ─── Font options & Loading ───────────────────────────────────────────────────
@@ -716,6 +716,14 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, onSelect]);
 
+  useEffect(() => {
+    presets.forEach((p) => {
+      if (p.props.fontFamily) {
+        loadFont(p.props.fontFamily);
+      }
+    });
+  }, [presets]);
+
   const handleOpenDropdown = () => {
     originalPropsRef.current = { ...textProps };
     setIsOpen((prev) => !prev);
@@ -758,7 +766,7 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
       <button
         type="button"
         onClick={handleOpenDropdown}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 hover:bg-gray-100/80 transition-all cursor-pointer outline-none shadow-sm"
+        className="w-full flex items-center justify-between gap-3 px-3 py-1.5 rounded-xl border-2 border-gray-200 bg-gray-50 hover:bg-gray-100/80 transition-all cursor-pointer outline-none shadow-sm"
       >
         {renderPresetPreview(activePreset)}
         <div className="flex items-center gap-2 shrink-0">
@@ -766,7 +774,7 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
             {activePreset.label}
           </span>
           <svg
-            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-gray-800 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -779,7 +787,7 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
 
       {isOpen && (
         <div
-          className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl border border-gray-200 shadow-xl z-50 max-h-[300px] overflow-y-auto p-1.5 flex flex-col gap-1.5"
+          className="absolute left-0 right-0 bottom-full mb-2 bg-white rounded-xl border border-gray-200 shadow-xl z-50 max-h-[300px] overflow-y-auto p-1.5 flex flex-col gap-1.5"
           onMouseLeave={() => {
             if (originalPropsRef.current) {
               onSelect(originalPropsRef.current);
@@ -807,7 +815,7 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
                 }`}
               >
                 {renderPresetPreview(preset)}
-                <span className="text-[10px] font-bold text-gray-400 capitalize text-right ml-2 shrink-0">
+                <span className="text-[10px] font-bold text-gray-800 capitalize text-right ml-2 shrink-0">
                   {preset.label}
                 </span>
               </button>
@@ -888,7 +896,7 @@ const FontSelect = ({ value, onChange }) => {
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 top-full mt-1 w-full bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden flex flex-col max-h-[300px]">
+        <div className="absolute z-50 bottom-full mb-1 w-full bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden flex flex-col max-h-[300px]">
           <div className="p-2 border-b border-gray-100 shrink-0 bg-gray-50/50">
             <div className="relative">
               <svg
@@ -897,7 +905,7 @@ const FontSelect = ({ value, onChange }) => {
                 viewBox="0 0 24 24"
                 strokeWidth={2}
                 stroke="currentColor"
-                className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2"
+                className="w-3.5 h-3.5 text-gray-800 absolute left-2.5 top-1/2 -translate-y-1/2"
               >
                 <path
                   strokeLinecap="round"
@@ -934,7 +942,7 @@ const FontSelect = ({ value, onChange }) => {
               </div>
             ))}
             {filteredFonts.length === 0 && (
-              <div className="px-3 py-4 text-sm text-gray-400 text-center">
+              <div className="px-3 py-4 text-sm text-gray-800 text-center">
                 No fonts found
               </div>
             )}
@@ -963,8 +971,16 @@ export default function EditorScreen2({
   onClosePopup,
   isEmbeddedMode = false,
   onLiveTextureUpdate,
+  activeTab,
+  setActiveTab,
+  onExpandedPanelChange,
 }) {
   const [showMobilePanel, setShowMobilePanel] = useState(false);
+  const [textExpanded, setTextExpanded] = useState(false);
+  const [selectedUploadType, setSelectedUploadType] = useState("logo"); // for embedded horizontal uploads bar
+  const [defaultAssetTab, setDefaultAssetTab] = useState("T-Shirt"); // for default assets row
+  const [showDefaultAssets, setShowDefaultAssets] = useState(false);   // expand toggle
+  const embeddedFileInputRef = useRef(null);
   const [showTapeLayout, setShowTapeLayout] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [showLeftPanel, setShowLeftPanel] = useState(true);
@@ -985,6 +1001,22 @@ export default function EditorScreen2({
     origWidth: 0,
     origHeight: 0,
   });
+
+  // Auto-collapse text expanded row when switching away from text tab
+  useEffect(() => {
+    if (activeTab !== "text") {
+      setTextExpanded(false);
+    }
+    if (activeTab !== "uploads") {
+      setShowDefaultAssets(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (onExpandedPanelChange) {
+      onExpandedPanelChange(textExpanded || showDefaultAssets);
+    }
+  }, [textExpanded, showDefaultAssets, onExpandedPanelChange]);
 
   // Attach window-level listeners so resize works even when cursor moves outside handle
   useEffect(() => {
@@ -1386,8 +1418,13 @@ export default function EditorScreen2({
         style3dDepth: layer.style3dDepth || 0,
         textStyleName: layer.textStyleName || "none",
       });
+      if (activeTab !== "text") setActiveTab("text");
+      if (leftTab !== "text") setLeftTab("text");
+    } else if (layer && layer.fitType) {
+      if (activeTab !== "uploads") setActiveTab("uploads");
+      if (leftTab !== "uploads") setLeftTab("uploads");
     }
-  }, []);
+  }, [activeTab, setActiveTab, leftTab]);
 
   const applyTextProp = useCallback(
     (key, value) => {
@@ -1430,19 +1467,15 @@ export default function EditorScreen2({
     <div className="flex flex-col h-full w-full overflow-hidden bg-white">
       <div className="flex flex-1 overflow-hidden bg-[#f5efe6]">
         {/* ── Left Side Panel ────────────────────────────────────────── */}
-        <div
-          className={`absolute z-20 transition-all duration-300 flex flex-col shrink-0 pointer-events-none ${
-            isEmbeddedMode
-              ? "left-4 top-20 bottom-[82px] py-4 gap-3"
-              : "left-0 top-0 h-full py-6 pl-6 pr-0 gap-4"
-          } ${
-            showLeftPanel
-              ? "w-[350px] opacity-100"
-              : "w-0 opacity-0 overflow-hidden"
-          }`}
-        >
-          {/* Header Actions / Embedded Apply buttons */}
-          {!isEmbeddedMode && (
+        {!isEmbeddedMode ? (
+          <div
+            className={`absolute z-20 transition-all duration-300 flex flex-col shrink-0 pointer-events-none left-0 top-0 h-full py-6 pl-6 pr-0 gap-4 ${
+              showLeftPanel
+                ? "w-[350px] opacity-100"
+                : "w-0 opacity-0 overflow-hidden"
+            }`}
+          >
+            {/* Header Actions / Embedded Apply buttons */}
             <div className="flex justify-start items-center gap-3 w-full shrink-0 pointer-events-auto">
               {/* Back button */}
               <button
@@ -1465,254 +1498,251 @@ export default function EditorScreen2({
                 </svg>
               </button>
             </div>
-          )}
 
-          {/* Tab switcher */}
-          <div className="flex bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-1.5 gap-1 shrink-0 items-center pointer-events-auto">
-            <button
-              onClick={() => setLeftTab("uploads")}
-              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border-none cursor-pointer
+            {/* Tab switcher */}
+            <div className="flex bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-1.5 gap-1 shrink-0 items-center pointer-events-auto">
+              <button
+                onClick={() => setLeftTab("uploads")}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border-none cursor-pointer
                 ${leftTab === "uploads" ? "bg-[#c0623a] text-white shadow-sm" : "bg-transparent text-gray-500 hover:text-gray-800"}`}
-            >
-              Uploads
-            </button>
-            <button
-              onClick={() => setLeftTab("text")}
-              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border-none cursor-pointer
-                ${leftTab === "text" ? "bg-[#c0623a] text-white shadow-sm" : "bg-transparent text-gray-500 hover:text-gray-800"}`}
-            >
-              Text
-            </button>
-
-            {/* Collapse button */}
-            <button
-              onClick={() => setShowLeftPanel(false)}
-              className="py-1 px-1.5 rounded-xl bg-gray-100 hover:bg-gray-200/80 transition-all border-none cursor-pointer flex items-center justify-center shrink-0 text-gray-500 hover:text-gray-800 hover:scale-105 active:scale-95"
-              title="Collapse Panel"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.8}
-                stroke="currentColor"
-                className="w-7 h-7"
               >
-                <rect x="3" y="3" width="18" height="18" rx="3" />
-                <line x1="9" y1="3" x2="9" y2="21" />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14 9l-3 3 3 3"
-                />
-              </svg>
-            </button>
-          </div>
+                Uploads
+              </button>
+              <button
+                onClick={() => setLeftTab("text")}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border-none cursor-pointer
+                ${leftTab === "text" ? "bg-[#c0623a] text-white shadow-sm" : "bg-transparent text-gray-500 hover:text-gray-800"}`}
+              >
+                Text
+              </button>
 
-          {/* Tab content */}
-          <div className="flex-1 overflow-hidden flex flex-col pointer-events-auto">
-            {leftTab === "uploads" && (
-              <UploadsPopup
-                onUpload={(file, url, fitType, uploadType, isDefault) => {
-                  if (
-                    url &&
-                    !isDefault &&
-                    !uploadedImages.some(
-                      (i) => (typeof i === "string" ? i : i.url) === url,
-                    )
-                  ) {
-                    setUploadedImages((prev) => [
-                      { url, type: uploadType || "design" },
-                      ...prev,
-                    ]);
+              {/* Collapse button */}
+              <button
+                onClick={() => setShowLeftPanel(false)}
+                className="py-1 px-1.5 rounded-xl bg-gray-100 hover:bg-gray-200/80 transition-all border-none cursor-pointer flex items-center justify-center shrink-0 text-gray-500 hover:text-gray-800 hover:scale-105 active:scale-95"
+                title="Collapse Panel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-7 h-7"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="3" />
+                  <line x1="9" y1="3" x2="9" y2="21" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M14 9l-3 3 3 3"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Tab content */}
+            <div className="flex-1 overflow-hidden flex flex-col pointer-events-auto">
+              {leftTab === "uploads" && (
+                <UploadsPopup
+                  onUpload={(file, url, fitType, uploadType, isDefault) => {
+                    if (
+                      url &&
+                      !isDefault &&
+                      !uploadedImages.some(
+                        (i) => (typeof i === "string" ? i : i.url) === url,
+                      )
+                    ) {
+                      setUploadedImages((prev) => [
+                        { url, type: uploadType || "design" },
+                        ...prev,
+                      ]);
+                    }
+                    const target = file || url;
+                    if (target) {
+                      canvasRef.current?.uploadImage(target, fitType);
+                    }
+                  }}
+                  uploadedImages={uploadedImages}
+                  selectedLayer={selectedLayer}
+                  isImageSelected={
+                    selectedLayer && selectedLayer.text === undefined
                   }
-                  const target = file || url;
-                  if (target) {
-                    canvasRef.current?.uploadImage(target, fitType);
+                  isFrameSelected={isFrameSelected}
+                  faceColor={
+                    currentSelectedFaces.size > 0
+                      ? canvasRef.current?.getFaceColor?.(Array.from(currentSelectedFaces)[0]) || null
+                      : null
                   }
-                }}
-                uploadedImages={uploadedImages}
-                selectedLayer={selectedLayer}
-                isImageSelected={
-                  selectedLayer && selectedLayer.text === undefined
-                }
-                isFrameSelected={isFrameSelected}
-                faceColor={
-                  currentSelectedFaces.size > 0
-                    ? canvasRef.current?.getFaceColor?.(Array.from(currentSelectedFaces)[0]) || null
-                    : null
-                }
-                onApplyFaceColor={handleFaceColorChange}
-                onApplyFit={(fitType) => {
-                  canvasRef.current?.applyFitToSelectedImage(fitType);
-                }}
-                onUpdateTextureGaps={(rowGap, colGap) => {
-                  canvasRef.current?.updateSelectedTextureGaps(rowGap, colGap);
-                }}
-                onDeleteUploadedImage={(url) => {
-                  setUploadedImages((prev) =>
-                    prev.filter(
-                      (item) =>
-                        (typeof item === "string" ? item : item.url) !== url,
-                    ),
-                  );
-                }}
-                onTogglePinUploadedImage={(url) => {
-                  setUploadedImages((prev) =>
-                    prev.map((item) => {
-                      if (typeof item === "string") {
-                        return item === url
-                          ? { url: item, type: "design", pinned: true }
-                          : item;
-                      }
-                      if (item.url === url) {
-                        return { ...item, pinned: !item.pinned };
-                      }
-                      return item;
-                    }),
-                  );
-                }}
-                modelUrl={modelUrl}
-                onOpenTapeLayout={() => setShowTapeLayout(true)}
-              />
-            )}
-
-            {leftTab === "text" && (
-              <div className="w-full h-full min-h-0 bg-white rounded-[15px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-y-auto flex flex-col p-6 gap-6">
-                {/* Add Text button */}
-                <div className="w-full pb-4 border-b border-gray-100 shrink-0">
-                  {/* <h2 className="text-xl font-bold text-gray-900 mb-4">Text</h2> */}
-                  <button
-                    onClick={() => {
-                      canvasRef.current?.addText("Your Text");
-                    }}
-                    className="w-full py-3 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer transition-colors shadow-sm"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2.5}
-                      stroke="currentColor"
-                      className="w-4 h-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                      />
-                    </svg>
-                    Add Text Box
-                  </button>
-                  <p className="text-[12px] text-gray-800 text-center mt-2">
-                    Double-click a text layer to edit its content
-                  </p>
-                </div>
-
-                {/* Formatting panel — only shows when text layer selected */}
-                {isTextLayer ? (
-                  <div className="flex flex-col gap-4">
-                    {/* Typography Style Presets Custom Dropdown */}
-                    <div className="border-b border-gray-100 pb-4">
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-2.5 uppercase tracking-wide">
-                        Typography Style Presets
-                      </label>
-                      <PresetDropdown
-                        presets={TYPO_PRESETS}
-                        textProps={textProps}
-                        selectedLayerText={selectedLayer?.text}
-                        onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
-                      />
-                    </div>
-                    {/* <h3 className="text-[13px] font-bold text-gray-800">Format Text</h3> */}
-
-                    {/* Font Family */}
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                        Font
-                      </label>
-                      <FontSelect
-                        value={textProps.fontFamily}
-                        onChange={(val) => applyTextProp("fontFamily", val)}
-                      />
-                    </div>
-
-                    {/* Font Size */}
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                        Size — {textProps.fontSize}px
-                      </label>
-                      <input
-                        type="range"
-                        min={20}
-                        max={300}
-                        step={2}
-                        value={textProps.fontSize}
-                        onChange={(e) =>
-                          applyTextProp("fontSize", Number(e.target.value))
+                  onApplyFaceColor={handleFaceColorChange}
+                  onApplyFit={(fitType) => {
+                    canvasRef.current?.applyFitToSelectedImage(fitType);
+                  }}
+                  onUpdateTextureGaps={(rowGap, colGap) => {
+                    canvasRef.current?.updateSelectedTextureGaps(rowGap, colGap);
+                  }}
+                  onDeleteUploadedImage={(url) => {
+                    setUploadedImages((prev) =>
+                      prev.filter(
+                        (item) =>
+                          (typeof item === "string" ? item : item.url) !== url,
+                      ),
+                    );
+                  }}
+                  onTogglePinUploadedImage={(url) => {
+                    setUploadedImages((prev) =>
+                      prev.map((item) => {
+                        if (typeof item === "string") {
+                          return item === url
+                            ? { url: item, type: "design", pinned: true }
+                            : item;
                         }
-                        className="w-full accent-[#c0623a] cursor-pointer"
-                      />
-                      <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
-                        <span>20px</span>
-                        <span>300px</span>
-                      </div>
-                    </div>
+                        if (item.url === url) {
+                          return { ...item, pinned: !item.pinned };
+                        }
+                        return item;
+                      }),
+                    );
+                  }}
+                  modelUrl={modelUrl}
+                  onOpenTapeLayout={() => setShowTapeLayout(true)}
+                />
+              )}
 
-                    {/* Bold / Italic / Underline */}
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                        Style
-                      </label>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => applyTextProp("bold", !textProps.bold)}
-                          className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold border-none cursor-pointer transition-all ${textProps.bold ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                        >
-                          B
-                        </button>
-                        <button
-                          onClick={() =>
-                            applyTextProp("italic", !textProps.italic)
-                          }
-                          className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm border-none cursor-pointer transition-all ${textProps.italic ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                        >
-                          <span className="font-serif italic font-bold leading-none text-base">
-                            I
-                          </span>
-                        </button>
-                        <button
-                          onClick={() =>
-                            applyTextProp("underline", !textProps.underline)
-                          }
-                          className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold underline border-none cursor-pointer transition-all ${textProps.underline ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                        >
-                          U
-                        </button>
-                      </div>
-                    </div>
+              {leftTab === "text" && (
+                <div className="w-full h-full min-h-0 bg-white rounded-[15px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-y-auto flex flex-col p-6 gap-6">
+                  {/* Add Text button */}
+                  <div className="w-full pb-4 border-b border-gray-100 shrink-0">
+                    <button
+                      onClick={() => {
+                        canvasRef.current?.addText("Your Text");
+                      }}
+                      className="w-full py-3 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer transition-colors shadow-sm"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                      Add Text Box
+                    </button>
+                    <p className="text-[12px] text-gray-800 text-center mt-2">
+                      Double-click a text layer to edit its content
+                    </p>
+                  </div>
 
-                    {/* Color */}
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                        Text Color
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
-                          <input
-                            type="color"
-                            value={textProps.color}
-                            onInput={(e) =>
-                              applyTextProp("color", e.target.value)
-                            }
-                            className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
-                          />
+                  {/* Formatting panel — only shows when text layer selected */}
+                  {isTextLayer ? (
+                    <div className="flex flex-col gap-4">
+                      {/* Typography Style Presets Custom Dropdown */}
+                      <div className="border-b border-gray-100 pb-4">
+                        <label className="block text-[11px] font-semibold text-gray-500 mb-2.5 uppercase tracking-wide">
+                          Typography Style Presets
+                        </label>
+                        <PresetDropdown
+                          presets={TYPO_PRESETS}
+                          textProps={textProps}
+                          selectedLayerText={selectedLayer?.text}
+                          onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
+                        />
+                      </div>
+
+                      {/* Font Family */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                          Font
+                        </label>
+                        <FontSelect
+                          value={textProps.fontFamily}
+                          onChange={(val) => applyTextProp("fontFamily", val)}
+                        />
+                      </div>
+
+                      {/* Font Size */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                          Size — {textProps.fontSize}px
+                        </label>
+                        <input
+                          type="range"
+                          min={20}
+                          max={300}
+                          step={2}
+                          value={textProps.fontSize}
+                          onChange={(e) =>
+                            applyTextProp("fontSize", Number(e.target.value))
+                          }
+                          className="w-full accent-[#c0623a] cursor-pointer"
+                        />
+                        <div className="flex justify-between text-[10px] text-gray-800 mt-0.5">
+                          <span>20px</span>
+                          <span>300px</span>
                         </div>
-                        <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
-                          {textProps.color}
-                        </span>
                       </div>
-                    </div>
+
+                      {/* Bold / Italic / Underline */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                          Style
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => applyTextProp("bold", !textProps.bold)}
+                            className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold border-none cursor-pointer transition-all ${textProps.bold ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                          >
+                            B
+                          </button>
+                          <button
+                            onClick={() =>
+                              applyTextProp("italic", !textProps.italic)
+                            }
+                            className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm border-none cursor-pointer transition-all ${textProps.italic ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                          >
+                            <span className="font-serif italic font-bold leading-none text-base">
+                              I
+                            </span>
+                          </button>
+                          <button
+                            onClick={() =>
+                              applyTextProp("underline", !textProps.underline)
+                            }
+                            className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold underline border-none cursor-pointer transition-all ${textProps.underline ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                          >
+                            U
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Color */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                          Text Color
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-200 shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform">
+                            <input
+                              type="color"
+                              value={textProps.color}
+                              onInput={(e) =>
+                                applyTextProp("color", e.target.value)
+                              }
+                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer outline-none"
+                            />
+                          </div>
+                          <span className="text-sm font-mono text-gray-700 bg-gray-100 rounded-lg px-3 py-1.5 uppercase tracking-wider">
+                            {textProps.color}
+                          </span>
+                        </div>
+                      </div>
 
                     {/* Preset Colors */}
                     <div>
@@ -1786,7 +1816,7 @@ export default function EditorScreen2({
                               }
                               className="w-full accent-[#c0623a] cursor-pointer"
                             />
-                            <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                            <div className="flex justify-between text-[10px] text-gray-800 mt-0.5">
                               <span>Up</span>
                               <span>Straight</span>
                               <span>Down</span>
@@ -1809,7 +1839,7 @@ export default function EditorScreen2({
                               }
                               className="w-full accent-[#c0623a] cursor-pointer"
                             />
-                            <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                            <div className="flex justify-between text-[10px] text-gray-800 mt-0.5">
                               <span>Tight</span>
                               <span>Normal</span>
                               <span>Loose</span>
@@ -1979,7 +2009,7 @@ export default function EditorScreen2({
                         viewBox="0 0 24 24"
                         strokeWidth={1.5}
                         stroke="#d1d5db"
-                        className="w-10 h-10"
+                              className="w-10 h-10"
                       >
                         <path
                           strokeLinecap="round"
@@ -1997,6 +2027,353 @@ export default function EditorScreen2({
             )}
           </div>
         </div>
+        ) : (
+          /* EMBEDDED MODE: Compact panels above bottom bar */
+          (activeTab === "uploads" || activeTab === "text") && (
+            <>
+              {/* ── UPLOADS: slim horizontal toolbar ── */}
+              {activeTab === "uploads" && (
+                <div className="fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto overflow-hidden w-fit max-w-[96vw] w-max">
+
+                  {/* ── Primary row ── */}
+                  <div className="py-2.5 px-3 flex flex-row items-center gap-3 overflow-x-auto no-scrollbar">
+
+                    {/* Hidden file input */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={embeddedFileInputRef}
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !file.type.startsWith("image/")) return;
+                        const url = URL.createObjectURL(file);
+                        if (!uploadedImages.some((i) => (typeof i === "string" ? i : i.url) === url)) {
+                          setUploadedImages((prev) => [{ url, type: selectedUploadType }, ...prev]);
+                        }
+                        canvasRef.current?.uploadImage(file, undefined);
+                        e.target.value = "";
+                      }}
+                    />
+
+                    {/* Upload button */}
+                    <button
+                      onClick={() => embeddedFileInputRef.current?.click()}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-bold text-xs border-none cursor-pointer transition-colors shadow-sm shrink-0"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                      </svg>
+                      Upload Image
+                    </button>
+
+                    <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                    {/* Fit controls */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-xs font-semibold text-gray-800 uppercase whitespace-nowrap">Fit</span>
+                      <div className="flex gap-1">
+                        {[["contain", "Contain"], ["cover", "Cover"], ["texture", "Tile"]].map(([val, label]) => (
+                          <button
+                            key={val}
+                            onClick={() => canvasRef.current?.applyFitToSelectedImage(val)}
+                            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-none cursor-pointer transition-all ${
+                              selectedLayer?.fitType === val
+                                ? "bg-[#c0623a] text-white shadow-sm"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Uploaded thumbnails */}
+                    {uploadedImages.length > 0 && (
+                      <>
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-xs font-semibold text-gray-800 uppercase whitespace-nowrap">Recent</span>
+                          <div className="flex gap-1.5 overflow-x-auto no-scrollbar max-w-[220px]">
+                            {uploadedImages.slice(0, 8).map((item, idx) => {
+                              const url = typeof item === "string" ? item : item.url;
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => canvasRef.current?.uploadImage(url, undefined)}
+                                  className="w-9 h-9 rounded-lg border-2 border-gray-200 hover:border-[#c0623a] overflow-hidden shrink-0 cursor-pointer transition-all bg-gray-50 p-0"
+                                  title="Apply image"
+                                >
+                                  <img src={url} alt="" className="w-full h-full object-cover" />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                    {/* Assets toggle button */}
+                    <button
+                      onClick={() => setShowDefaultAssets((v) => !v)}
+                      title="Default Assets"
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border-none cursor-pointer text-xs font-bold transition-all shrink-0 ${showDefaultAssets ? "bg-[#c0623a] text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
+                    >
+                      Assets
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-3.5 h-3.5 transition-transform ${showDefaultAssets ? "rotate-180" : ""}`}>
+                        <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd"/>
+                      </svg>
+                    </button>
+
+                  </div>
+
+                  {/* ── Default Assets expanded row ── */}
+                  {showDefaultAssets && (
+                    <div className="border-t border-gray-100">
+                      {/* Sub-tab selector */}
+                      <div className="px-3 pt-2 flex gap-1.5 overflow-x-auto no-scrollbar">
+                        {Object.keys(DEFAULT_ASSET_COLLECTIONS).map((tab) => (
+                          <button
+                            key={tab}
+                            onClick={() => setDefaultAssetTab(tab)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border-none cursor-pointer transition-all whitespace-nowrap shrink-0 ${
+                              defaultAssetTab === tab
+                                ? "bg-[#c0623a] text-white shadow-sm"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                          >
+                            {tab}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Thumbnail row */}
+                      <div className="py-2 px-3 flex gap-1.5 overflow-x-auto no-scrollbar">
+                        {(DEFAULT_ASSET_COLLECTIONS[defaultAssetTab]?.() || []).map((src, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              canvasRef.current?.uploadImage(src, "cover");
+                            }}
+                            className="w-10 h-10 rounded-lg border-2 border-gray-200 hover:border-[#c0623a] overflow-hidden shrink-0 cursor-pointer transition-all bg-gray-50 p-0"
+                            title="Apply pattern"
+                          >
+                            <img src={src} alt="" className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── TEXT: slim horizontal toolbar + expandable second row ── */}
+              {activeTab === "text" && (
+                <div className="fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto w-fit max-w-[96vw] w-max">
+
+                  {/* Primary row */}
+                  <div className="py-2.5 px-3 flex flex-row flex-wrap items-center gap-3">
+                    {/* Add Text */}
+                    <button
+                      onClick={() => canvasRef.current?.addText("Your Text")}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-bold text-xs border-none cursor-pointer transition-colors shadow-sm shrink-0"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      Add Text
+                    </button>
+
+                    {isTextLayer && (
+                      <>
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Font */}
+                        <div className="shrink-0 min-w-[110px]">
+                          <FontSelect
+                            value={textProps.fontFamily}
+                            onChange={(val) => applyTextProp("fontFamily", val)}
+                          />
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Size */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Size</span>
+                          <input
+                            type="range" min={20} max={300} step={2}
+                            value={textProps.fontSize}
+                            onChange={(e) => applyTextProp("fontSize", Number(e.target.value))}
+                            className="w-20 accent-[#c0623a] cursor-pointer"
+                          />
+                          <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0">
+                            {typeof textProps.fontSize === "number" ? textProps.fontSize.toFixed(1) : textProps.fontSize}
+                          </span>
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* B / I / U */}
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => applyTextProp("bold", !textProps.bold)} className={`w-7 h-7 rounded-lg text-xs font-bold border-none cursor-pointer transition-all ${textProps.bold ? "bg-[#c0623a] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>B</button>
+                          <button onClick={() => applyTextProp("italic", !textProps.italic)} className={`w-7 h-7 rounded-lg text-xs font-bold italic border-none cursor-pointer transition-all ${textProps.italic ? "bg-[#c0623a] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>I</button>
+                          <button onClick={() => applyTextProp("underline", !textProps.underline)} className={`w-7 h-7 rounded-lg text-xs font-bold underline border-none cursor-pointer transition-all ${textProps.underline ? "bg-[#c0623a] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>U</button>
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Color */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Color</span>
+                          <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                            <input
+                              type="color" value={textProps.color}
+                              onInput={(e) => applyTextProp("color", e.target.value)}
+                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
+                            />
+                          </div>
+                          <span className="text-[10px] font-mono text-gray-500 uppercase">{textProps.color}</span>
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Align */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Align</span>
+                          <div className="flex gap-0.5">
+                            <button onClick={() => canvasRef.current?.alignSelectedLayer("left", null)} title="Left" className="w-7 h-7 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" d="M3 6h18M3 10h12M3 14h18M3 18h12"/></svg>
+                            </button>
+                            <button onClick={() => canvasRef.current?.alignSelectedLayer("center", null)} title="Center" className="w-7 h-7 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" d="M3 6h18M6 10h12M3 14h18M6 18h12"/></svg>
+                            </button>
+                            <button onClick={() => canvasRef.current?.alignSelectedLayer("right", null)} title="Right" className="w-7 h-7 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" d="M3 6h18M9 10h12M3 14h18M9 18h12"/></svg>
+                            </button>
+                          </div>
+                        </div>
+
+
+
+                        {/* More / Less toggle */}
+                        <button
+                          onClick={() => setTextExpanded((v) => !v)}
+                          title="More options"
+                          className={`flex items-center gap-1 px-2 py-1.5 rounded-xl border-none cursor-pointer text-[10px] font-bold transition-all shrink-0 ${textExpanded ? "bg-[#c0623a] text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
+                        >
+                          {textExpanded ? "Less" : "More"}
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-3.5 h-3.5 transition-transform ${textExpanded ? "rotate-180" : ""}`}>
+                            <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd"/>
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Expanded second row for advanced controls */}
+                  {isTextLayer && textExpanded && (
+                    <div className="border-t border-gray-100 py-2.5 px-3 flex flex-row flex-wrap items-center gap-3">
+
+                      {/* Arch / Bend */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Arch</span>
+                        <input
+                          type="range" min={-100} max={100} step={1}
+                          value={textProps.bend}
+                          onChange={(e) => applyTextProp("bend", Number(e.target.value))}
+                          className="w-24 accent-[#c0623a] cursor-pointer"
+                        />
+                        <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.bend}</span>
+                      </div>
+
+                      <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                      {/* Letter Spacing */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Spacing</span>
+                        <input
+                          type="range" min={-20} max={100} step={1}
+                          value={textProps.letterSpacing}
+                          onChange={(e) => applyTextProp("letterSpacing", Number(e.target.value))}
+                          className="w-24 accent-[#c0623a] cursor-pointer"
+                        />
+                        <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.letterSpacing}</span>
+                      </div>
+
+                      <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                      {/* Preset Styles */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Presets</span>
+                        <PresetDropdown
+                          presets={TYPO_PRESETS}
+                          textProps={textProps}
+                          selectedLayerText={selectedLayer?.text}
+                          onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
+                        />
+                      </div>
+
+                      <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                      {/* Outline Toggle */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Outline</span>
+                        <button
+                          onClick={() => applyTextProp("stroke", !textProps.stroke)}
+                          className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${textProps.stroke ? "bg-[#c0623a]" : "bg-gray-300"}`}
+                        >
+                          <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${textProps.stroke ? "translate-x-4" : ""}`} />
+                        </button>
+                      </div>
+
+                      {/* Outline Color */}
+                      <div className="w-px h-5 bg-gray-200 shrink-0" />
+                      <div className={`flex items-center gap-1.5 shrink-0 transition-opacity ${textProps.stroke ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Outline Color</span>
+                        <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                          <input
+                            type="color" value={textProps.strokeColor || "#000000"}
+                            onInput={(e) => applyTextProp("strokeColor", e.target.value)}
+                            className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Shadow Toggle */}
+                      <div className="w-px h-5 bg-gray-200 shrink-0" />
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Shadow</span>
+                        <button
+                          onClick={() => applyTextProp("shadow", !textProps.shadow)}
+                          className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${textProps.shadow ? "bg-[#c0623a]" : "bg-gray-300"}`}
+                        >
+                          <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${textProps.shadow ? "translate-x-4" : ""}`} />
+                        </button>
+                      </div>
+
+                      {/* Shadow Color */}
+                      <div className="w-px h-5 bg-gray-200 shrink-0" />
+                      <div className={`flex items-center gap-1.5 shrink-0 transition-opacity ${textProps.shadow ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Shadow Color</span>
+                        <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                          <input
+                            type="color" value={textProps.shadowColor || "#000000"}
+                            onInput={(e) => applyTextProp("shadowColor", e.target.value)}
+                            className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )
+        )}
 
         {/* ── Center Canvas ─────────────────────────────────────────────── */}
         <div
@@ -2027,7 +2404,7 @@ export default function EditorScreen2({
             </div>
           )}
           {/* Floating Left Panel Trigger when collapsed */}
-          {!showLeftPanel && (
+          {!showLeftPanel && !isEmbeddedMode && (
             <div className={`absolute left-6 z-30 flex flex-col gap-3 ${isEmbeddedMode ? "top-24" : "top-6"}`}>
               {/* Back button - only in normal mode */}
               {!isEmbeddedMode && (
@@ -2147,7 +2524,7 @@ export default function EditorScreen2({
                 className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all border-none ${
                   currentSelectedFaces.size > 0
                     ? "bg-[#c0623a] text-white hover:bg-[#a54f2c] cursor-pointer shadow-md hover:shadow-lg active:scale-95"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-800 cursor-not-allowed"
                 }`}
               >
                 {currentSelectedFaces.size > 0
@@ -2265,7 +2642,7 @@ export default function EditorScreen2({
             <div className="bg-white rounded-[15px] p-6 w-[340px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col gap-5 relative border border-gray-100">
               <button
                 onClick={() => setShowExportModal(false)}
-                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center border-none text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center border-none text-gray-800 hover:text-gray-600 cursor-pointer transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2456,7 +2833,7 @@ export default function EditorScreen2({
                 <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-[#c05520]/10 text-[#c05520] px-1.5 py-0.5 rounded-full">LIVE</span>
               </div>
               {!isFullscreenPopup && (
-                <span className="text-[10px] text-gray-400 ml-2 hidden sm:block">Drag to move · corners to resize</span>
+                <span className="text-[10px] text-gray-800 ml-2 hidden sm:block">Drag to move · corners to resize</span>
               )}
             </div>
             <div className="flex items-center gap-1.5" onPointerDown={(e) => e.stopPropagation()}>

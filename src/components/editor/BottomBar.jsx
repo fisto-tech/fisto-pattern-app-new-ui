@@ -143,11 +143,44 @@ export default function BottomBar({
   multiWindow = false,
   setMultiWindow,
   openTabs = {},
+  isUvEditing = false,
 }) {
+  const visibleItems = React.useMemo(() => {
+    if (isUvEditing) {
+      const items = [...bottomNavItems];
+      const uvIndex = items.findIndex((item) => item.id === "uv_editor");
+      if (uvIndex !== -1) {
+        items.splice(
+          uvIndex,
+          0,
+          {
+            id: "uploads",
+            label: "Uploads",
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+            ),
+          },
+          {
+            id: "text",
+            label: "Text",
+            icon: (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.43 5.43h3.14M12 5.43v13.14M9.25 18.57h5.5" />
+              </svg>
+            ),
+          }
+        );
+      }
+      return items;
+    }
+    return bottomNavItems;
+  }, [isUvEditing]);
   return (
-    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 max-w-[95vw] overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)] no-scrollbar">
+    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 max-w-[95vw] w-max overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)] no-scrollbar">
       <div className="flex items-center gap-1 shrink-0">
-        {bottomNavItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = multiWindow ? !!openTabs[item.id] : activeTab === item.id;
           return (
             <button

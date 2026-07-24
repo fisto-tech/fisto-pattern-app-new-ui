@@ -379,6 +379,16 @@ export default function EditorPage() {
   const handleProceedToTextureEditor = (materialName) => {
     setSelectedMaterial(materialName || null);
     setCurrentScreen(2);
+    // Close other tab popups
+    setActiveTab(null);
+    setOpenTabs({
+      models: false,
+      layout: false,
+      edit: false,
+      textures: false,
+      scene: false,
+      gallery: false,
+    });
   };
 
   const handleLiveUvTextureUpdate = (materialId, liveDataUrl) => {

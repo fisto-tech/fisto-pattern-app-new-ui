@@ -16,7 +16,7 @@ import tsg12 from "../../assets/images/Editor 2/t-shirtGraphics/12.webp";
 import tsg13 from "../../assets/images/Editor 2/t-shirtGraphics/13.webp";
 // import  from "../../assets/images/Editor 2/t-shirtGraphics/14.webp";
 
-const tShirtGraphics = [tsg1,tsg3,tsg4,tsg5,tsg6,tsg7,tsg8,tsg9,tsg10,tsg11,tsg12,tsg13];
+export const tShirtGraphics = [tsg1,tsg3,tsg4,tsg5,tsg6,tsg7,tsg8,tsg9,tsg10,tsg11,tsg12,tsg13];
 
 // ── Carry Bag Graphics (9 images) ─────────────────────────────────────────────
 import cb1 from "../../assets/images/Editor 2/carryBag/1.jpg";
@@ -29,15 +29,23 @@ import cb7 from "../../assets/images/Editor 2/carryBag/7.jpg";
 import cb8 from "../../assets/images/Editor 2/carryBag/8.jpg";
 import cb9 from "../../assets/images/Editor 2/carryBag/9.jpg";
 
-const carryBagGraphics = [cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8, cb9];
+export const carryBagGraphics = [cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8, cb9];
 
 // ── Floral Graphics (glob import) ─────────────────────────────────────────────
 const floralImagesGlob = import.meta.glob("../../assets/images/Editor 2/Floral/*.{webp,WEBP}", { eager: true, import: "default" });
-const floralGraphics = Object.values(floralImagesGlob);
+export const floralGraphics = Object.values(floralImagesGlob);
 
 // ── Damask Graphics (glob import) ─────────────────────────────────────────────
 const damaskImagesGlob = import.meta.glob("../../assets/images/Editor 2/Da Mask/*.{png,jpg,jpeg,PNG,JPG,JPEG,webp,WEBP}", { eager: true, import: "default" });
-const damaskGraphics = Object.values(damaskImagesGlob);
+export const damaskGraphics = Object.values(damaskImagesGlob);
+
+// ── Exported collection map ───────────────────────────────────────────────────
+export const DEFAULT_ASSET_COLLECTIONS = {
+  'T-Shirt': () => tShirtGraphics,
+  'Carry Bag': () => carryBagGraphics,
+  'Floral': () => floralGraphics,
+  'Damask': () => damaskGraphics,
+};
 
 // ── Upload type options ───────────────────────────────────────────────────────
 const UPLOAD_TYPES = [
@@ -220,7 +228,8 @@ export default function UploadsPopup({
   onDeleteUploadedImage,
   onTogglePinUploadedImage,
   modelUrl,
-  onOpenTapeLayout
+  onOpenTapeLayout,
+  compact = false,
 }) {
   const fileInputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -379,7 +388,7 @@ export default function UploadsPopup({
   const borderClr   = '#e5e7eb';
 
   return (
-    <div style={{ width: '100%', height: '100%', minHeight: 0, background: '#fff', borderRadius: 15, boxShadow: '0 8px 30px rgba(0,0,0,0.08)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={compact ? { width: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' } : { width: '100%', height: '100%', minHeight: 0, background: '#fff', borderRadius: 15, boxShadow: '0 8px 30px rgba(0,0,0,0.08)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Scrollable Body ── */}
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '20px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2, scrollbarWidth: 'thin' }}>

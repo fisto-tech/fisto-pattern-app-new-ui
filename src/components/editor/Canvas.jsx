@@ -1858,7 +1858,7 @@ const Canvas = forwardRef(
       fullUv,
       bgColor,
       isActive,
-      appliedMaterials,
+      appliedMaterials = {},
       onSelectedLayerChange,
       onFaceSelectionChange,
       onOpenTapeLayout,
@@ -3050,6 +3050,7 @@ const Canvas = forwardRef(
       const scale = canvasScaleRef.current;
 
       const interaction = interactionRef.current;
+      interaction.isDragging = false; // Reset to prevent stuck drag state
 
       if (e.button === 2) {
         let clickedImage = null;
@@ -3421,6 +3422,13 @@ const Canvas = forwardRef(
       const interaction = interactionRef.current;
       const displayCanvas = displayCanvasRef.current;
       if (!displayCanvas) return;
+
+      // If dragging is stuck but no buttons are pressed, cancel it
+      if (interaction.isDragging && e.buttons === 0) {
+        interaction.isDragging = false;
+        interaction.mode = HANDLE.NONE;
+        displayCanvas.releasePointerCapture(e.pointerId);
+      }
 
       const rect = displayCanvas.getBoundingClientRect();
       const mx = (e.clientX - rect.left) / zoom;
@@ -5116,6 +5124,7 @@ const Canvas = forwardRef(
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
                 onContextMenu={handleContextMenu}
                 onDoubleClick={(e) => {
                   const displayCanvas = displayCanvasRef.current;
@@ -5401,8 +5410,10 @@ const Canvas = forwardRef(
                 </div>
               )}
             </div>
-            {/* Bottom Tool Bar */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 bg-white shadow-[0_4px_25px_rgba(0,0,0,0.15)] rounded-full px-4 py-2.5 flex items-center gap-2 border border-gray-100">
+            {/* Left Tool Bar */}
+            <div 
+              className="absolute z-30 bg-white shadow-[0_4px_25px_rgba(0,0,0,0.15)] flex items-center border border-gray-100 transition-all duration-300 left-4 top-1/2 -translate-y-1/2 flex-col px-2.5 py-4 gap-2 rounded-3xl"
+            >
               {/* Tools */}
               <Tooltip label="Select Tool">
                 <button
@@ -5484,11 +5495,11 @@ const Canvas = forwardRef(
                     ref={eraserPopupRef}
                     onPointerDown={handlePopupPointerDown}
                     style={{
-                      transform: `translate(calc(-50% + ${eraserPopupPos.x}px), ${eraserPopupPos.y}px)`,
+                      transform: `translate(${eraserPopupPos.x}px, calc(-50% + ${eraserPopupPos.y}px))`,
                       cursor: "move",
                       userSelect: "none",
                     }}
-                    className="absolute bottom-full mb-4 left-1/2 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 p-4 w-64 animate-in fade-in zoom-in-95 duration-200"
+                    className="absolute bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 p-4 w-64 animate-in fade-in zoom-in-95 duration-200 left-full ml-4 top-1/2"
                   >
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -5614,7 +5625,7 @@ const Canvas = forwardRef(
                 )}
               </div>
 
-              <div className="w-px h-6 bg-gray-200 mx-1" />
+              <div className="bg-gray-200 shrink-0 w-6 h-px my-1" />
 
               {/* History */}
               <Tooltip label="Undo">
@@ -5662,7 +5673,7 @@ const Canvas = forwardRef(
                 </button>
               </Tooltip>
 
-              <div className="w-px h-6 bg-gray-200 mx-1" />
+              <div className="bg-gray-200 shrink-0 w-6 h-px my-1" />
 
               {/* Zoom */}
               <Tooltip label="Zoom Out">
@@ -5693,7 +5704,7 @@ const Canvas = forwardRef(
                 </button>
               </Tooltip>
 
-              <div className="w-px h-6 bg-gray-200 mx-1" />
+              <div className="bg-gray-200 shrink-0 w-6 h-px my-1" />
 
               <Tooltip label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
                 <button

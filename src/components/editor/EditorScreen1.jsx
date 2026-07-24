@@ -4273,7 +4273,7 @@ export default function EditorScreen1({
         )}
 
         {/* Loading overlay sits on top of canvas */}
-        {modelUrl && <ModelLoadingOverlay isLoading={isModelLoading} />}
+        {modelUrl && !isUvEditing && <ModelLoadingOverlay isLoading={isModelLoading} />}
 
         {/* Clear UV Edits Button - Bottom Right */}
         {modelUrl &&
@@ -4891,7 +4891,7 @@ export default function EditorScreen1({
                   }}
                   className={`flex items-center gap-1 py-1.5 px-3 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${colorBrushActive ? "bg-[#c05520] text-white border-transparent" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"}`}
                 >
-                  {colorBrushActive ? "On" : "Pick"}
+                  {colorBrushActive ? "Ok" : "Pick"}
                 </button>
               </div>
               {pickerMessage && <span className="text-[10px] text-red-500 font-bold shrink-0">{pickerMessage}</span>}
@@ -6351,6 +6351,7 @@ export default function EditorScreen1({
         multiWindow={multiWindow}
         setMultiWindow={setMultiWindow}
         openTabs={openTabs}
+        isUvEditing={isUvEditing}
         onResetView={() => {
           if (orbitControlsRef.current) {
             orbitControlsRef.current.reset();
