@@ -4603,6 +4603,9 @@ const Canvas = forwardRef(
         redrawDisplay();
         onSelectedLayerChangeRef.current?.(null);
       },
+      hasEdits: () => {
+        return historyIndexRef.current > 0;
+      },
       clearAllArtwork: () => {
         imagesRef.current = [];
         setSelectedImage(null);

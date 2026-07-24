@@ -1455,6 +1455,21 @@ export default function EditorScreen2({
     [textProps],
   );
 
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  const handleCancel = () => {
+    const hasEdits = (selectedColor && selectedColor !== "none") || (canvasRef.current?.hasEdits?.() ?? false);
+    if (hasEdits) {
+      setShowCancelConfirm(true);
+    } else {
+      if (isPopupMode) {
+        onClosePopup?.();
+      } else {
+        onBack && onBack();
+      }
+    }
+  };
+
   const handleSave = () => {
     const finalColor = selectedColor !== "none" ? bgColor : undefined;
     const hasArtwork = canvasRef.current?.hasArtwork?.() ?? false;
@@ -1490,7 +1505,7 @@ export default function EditorScreen2({
             <div className="flex justify-start items-center gap-3 w-full shrink-0 pointer-events-auto">
               {/* Back button */}
               <button
-                onClick={onBack}
+                onClick={handleCancel}
                 className="w-14 h-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-center border-none cursor-pointer hover:bg-gray-50 transition-colors"
               >
                 <svg
@@ -2416,7 +2431,7 @@ export default function EditorScreen2({
             <div className="absolute top-4 right-6 z-40 flex items-center gap-2 pointer-events-auto">
               <button
                 onClick={handleSave}
-                className="py-2.5 px-4 rounded-xl bg-[#c05520] hover:bg-[#a04619] text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 border-none"
+                className="py-2.5 px-4 rounded-xl bg-[#c05520] hover:bg-[#a04619] text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 border-none animate-premium-pulse"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.8} stroke="currentColor" className="w-3.5 h-3.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
@@ -2424,7 +2439,7 @@ export default function EditorScreen2({
                 Apply Changes
               </button>
               <button
-                onClick={() => onBack && onBack()}
+                onClick={handleCancel}
                 className="py-2.5 px-4 rounded-xl bg-white hover:bg-red-50 text-gray-700 hover:text-red-600 font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer border border-gray-200"
               >
                 Cancel
@@ -2437,7 +2452,7 @@ export default function EditorScreen2({
               {/* Back button - only in normal mode */}
               {!isEmbeddedMode && (
                 <button
-                  onClick={onBack}
+                  onClick={handleCancel}
                   className="w-14 h-12 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-center border-none cursor-pointer hover:bg-gray-50 text-gray-800 transition-all duration-200 hover:scale-105 active:scale-95"
                   title="Go Back"
                 >
@@ -2868,7 +2883,7 @@ export default function EditorScreen2({
               {/* Apply & Close */}
               <button
                 onClick={handleSave}
-                className="px-3.5 py-1.5 rounded-lg bg-[#c05520] hover:bg-[#a04619] text-white text-xs font-bold border-none cursor-pointer transition-all shadow-sm"
+                className="px-3.5 py-1.5 rounded-lg bg-[#c05520] hover:bg-[#a04619] text-white text-xs font-bold border-none cursor-pointer transition-all shadow-sm animate-premium-pulse"
               >
                 Apply & Close
               </button>
@@ -2890,7 +2905,7 @@ export default function EditorScreen2({
               </button>
               {/* Close without applying */}
               <button
-                onClick={() => onClosePopup?.()}
+                onClick={handleCancel}
                 className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-500 border-none cursor-pointer transition-colors"
                 title="Close without applying"
               >
@@ -2938,6 +2953,65 @@ export default function EditorScreen2({
   }
 
   // Normal full-screen mode
-  return innerContent;
+  return (
+    <>
+      {innerContent}
+
+      {/* Glow pulse styles */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes premium-pulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 6px -1px rgba(192, 85, 32, 0.2), 0 2px 4px -1px rgba(192, 85, 32, 0.1);
+          }
+          50% {
+            transform: scale(1.03);
+            box-shadow: 0 12px 20px -3px rgba(192, 85, 32, 0.5), 0 4px 8px -2px rgba(192, 85, 32, 0.3);
+          }
+        }
+        .animate-premium-pulse {
+          animation: premium-pulse 2s infinite ease-in-out;
+        }
+      `}} />
+
+      {/* Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-gray-100 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#dc2626" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+            </div>
+            <h3 className="text-gray-900 font-extrabold text-lg mb-2">Unsaved Changes</h3>
+            <p className="text-gray-500 text-sm mb-6 font-medium leading-relaxed">
+              Are you sure you want to exit? There are unsaved changes for this edit.
+            </p>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs border-none cursor-pointer transition-colors"
+              >
+                Keep Editing
+              </button>
+              <button
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  if (isPopupMode) {
+                    onClosePopup?.();
+                  } else {
+                    onBack && onBack();
+                  }
+                }}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold text-xs border-none cursor-pointer transition-colors"
+              >
+                Discard & Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 

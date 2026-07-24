@@ -84,6 +84,7 @@ export default function EditorPage() {
 
   // Key to force Screen 2 canvas re-mount on reset
   const [canvasResetKey, setCanvasResetKey] = useState(0);
+  const [preUvState, setPreUvState] = useState(null);
 
   // Lift activeTab state here to preserve it when switching screens
   const [activeTab, setActiveTab] = useState("edit");
@@ -378,6 +379,7 @@ export default function EditorPage() {
   // Transition from Screen 1 to Screen 2
   const handleProceedToTextureEditor = (materialName) => {
     setSelectedMaterial(materialName || null);
+    setPreUvState(JSON.parse(JSON.stringify(editorState)));
     setCurrentScreen(2);
     // Close other tab popups
     setActiveTab(null);
@@ -428,6 +430,15 @@ export default function EditorPage() {
 
   // Optional: Transition back to Screen 1
   const handleBackToModelViewer = (textureDataUrl, colorHex) => {
+    if (textureDataUrl === undefined && colorHex === undefined) {
+      if (preUvState) {
+        setEditorState(preUvState);
+      }
+      setSelectedMaterial("all");
+      setCurrentScreen(1);
+      return;
+    }
+
     let targetMat = selectedMaterial || "all";
     if (targetMat === "none") {
       targetMat = "all";
