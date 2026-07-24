@@ -1190,7 +1190,12 @@ export default function EditorScreen2({
   const [uploadedImages, setUploadedImages] = useState(() => {
     try {
       const saved = localStorage.getItem("fisto_uploaded_images");
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return parsed.filter(item => {
+        const url = typeof item === "string" ? item : item.url;
+        return url && !url.startsWith("blob:");
+      });
     } catch (e) {
       console.error(e);
       return [];
@@ -1546,21 +1551,33 @@ export default function EditorScreen2({
               {leftTab === "uploads" && (
                 <UploadsPopup
                   onUpload={(file, url, fitType, uploadType, isDefault) => {
-                    if (
-                      url &&
-                      !isDefault &&
-                      !uploadedImages.some(
-                        (i) => (typeof i === "string" ? i : i.url) === url,
-                      )
-                    ) {
-                      setUploadedImages((prev) => [
-                        { url, type: uploadType || "design" },
-                        ...prev,
-                      ]);
-                    }
-                    const target = file || url;
-                    if (target) {
-                      canvasRef.current?.uploadImage(target, fitType);
+                    const addToRecent = (finalUrl) => {
+                      if (
+                        finalUrl &&
+                        !isDefault &&
+                        !uploadedImages.some(
+                          (i) => (typeof i === "string" ? i : i.url) === finalUrl,
+                        )
+                      ) {
+                        setUploadedImages((prev) => [
+                          { url: finalUrl, type: uploadType || "design" },
+                          ...prev,
+                        ]);
+                      }
+                      const target = file || finalUrl;
+                      if (target) {
+                        canvasRef.current?.uploadImage(target, fitType);
+                      }
+                    };
+
+                    if (file && !isDefault) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        addToRecent(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    } else {
+                      addToRecent(url);
                     }
                   }}
                   uploadedImages={uploadedImages}
@@ -2047,11 +2064,15 @@ export default function EditorScreen2({
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (!file || !file.type.startsWith("image/")) return;
-                        const url = URL.createObjectURL(file);
-                        if (!uploadedImages.some((i) => (typeof i === "string" ? i : i.url) === url)) {
-                          setUploadedImages((prev) => [{ url, type: selectedUploadType }, ...prev]);
-                        }
-                        canvasRef.current?.uploadImage(file, undefined);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64Url = reader.result;
+                          if (!uploadedImages.some((i) => (typeof i === "string" ? i : i.url) === base64Url)) {
+                            setUploadedImages((prev) => [{ url: base64Url, type: selectedUploadType }, ...prev]);
+                          }
+                          canvasRef.current?.uploadImage(base64Url, undefined);
+                        };
+                        reader.readAsDataURL(file);
                         e.target.value = "";
                       }}
                     />
@@ -2171,10 +2192,10 @@ export default function EditorScreen2({
 
               {/* ── TEXT: slim horizontal toolbar + expandable second row ── */}
               {activeTab === "text" && (
-                <div className="fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto w-fit max-w-[96vw] w-max">
+                <div className={`fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto transition-all duration-300 flex flex-col ${isTextLayer ? "w-max" : "w-fit w-max"}`}>
 
                   {/* Primary row */}
-                  <div className="py-2.5 px-3 flex flex-row flex-wrap items-center gap-3">
+                  <div className="py-2.5 px-3 flex flex-row items-center gap-2.5 sm:gap-3 overflow-x-auto no-scrollbar">
                     {/* Add Text */}
                     <button
                       onClick={() => canvasRef.current?.addText("Your Text")}
@@ -2256,13 +2277,11 @@ export default function EditorScreen2({
                           </div>
                         </div>
 
-
-
                         {/* More / Less toggle */}
                         <button
                           onClick={() => setTextExpanded((v) => !v)}
                           title="More options"
-                          className={`flex items-center gap-1 px-2 py-1.5 rounded-xl border-none cursor-pointer text-[10px] font-bold transition-all shrink-0 ${textExpanded ? "bg-[#c0623a] text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
+                          className={`flex items-center gap-1 px-2 py-1.5 rounded-xl border-none cursor-pointer text-[10px] font-bold transition-all shrink-0 ml-auto ${textExpanded ? "bg-[#c0623a] text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
                         >
                           {textExpanded ? "Less" : "More"}
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-3.5 h-3.5 transition-transform ${textExpanded ? "rotate-180" : ""}`}>
@@ -2273,101 +2292,104 @@ export default function EditorScreen2({
                     )}
                   </div>
 
-                  {/* Expanded second row for advanced controls */}
+                  {/* Expanded advanced controls (Row 1 & Row 2 stacked) */}
                   {isTextLayer && textExpanded && (
-                    <div className="border-t border-gray-100 py-2.5 px-3 flex flex-row flex-wrap items-center gap-3">
-
-                      {/* Arch / Bend */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Arch</span>
-                        <input
-                          type="range" min={-100} max={100} step={1}
-                          value={textProps.bend}
-                          onChange={(e) => applyTextProp("bend", Number(e.target.value))}
-                          className="w-24 accent-[#c0623a] cursor-pointer"
-                        />
-                        <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.bend}</span>
-                      </div>
-
-                      <div className="w-px h-5 bg-gray-200 shrink-0" />
-
-                      {/* Letter Spacing */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Spacing</span>
-                        <input
-                          type="range" min={-20} max={100} step={1}
-                          value={textProps.letterSpacing}
-                          onChange={(e) => applyTextProp("letterSpacing", Number(e.target.value))}
-                          className="w-24 accent-[#c0623a] cursor-pointer"
-                        />
-                        <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.letterSpacing}</span>
-                      </div>
-
-                      <div className="w-px h-5 bg-gray-200 shrink-0" />
-
-                      {/* Preset Styles */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Presets</span>
-                        <PresetDropdown
-                          presets={TYPO_PRESETS}
-                          textProps={textProps}
-                          selectedLayerText={selectedLayer?.text}
-                          onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
-                        />
-                      </div>
-
-                      <div className="w-px h-5 bg-gray-200 shrink-0" />
-
-                      {/* Outline Toggle */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Outline</span>
-                        <button
-                          onClick={() => applyTextProp("stroke", !textProps.stroke)}
-                          className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${textProps.stroke ? "bg-[#c0623a]" : "bg-gray-300"}`}
-                        >
-                          <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${textProps.stroke ? "translate-x-4" : ""}`} />
-                        </button>
-                      </div>
-
-                      {/* Outline Color */}
-                      <div className="w-px h-5 bg-gray-200 shrink-0" />
-                      <div className={`flex items-center gap-1.5 shrink-0 transition-opacity ${textProps.stroke ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
-                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Outline Color</span>
-                        <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                    <>
+                      {/* Row 1: Arch, Spacing, Presets */}
+                      <div className="border-t border-gray-100 py-2.5 px-3 flex flex-row items-center gap-3">
+                        {/* Arch / Bend */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Arch</span>
                           <input
-                            type="color" value={textProps.strokeColor || "#000000"}
-                            onInput={(e) => applyTextProp("strokeColor", e.target.value)}
-                            className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
+                            type="range" min={-100} max={100} step={1}
+                            value={textProps.bend}
+                            onChange={(e) => applyTextProp("bend", Number(e.target.value))}
+                            className="w-24 accent-[#c0623a] cursor-pointer"
+                          />
+                          <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.bend}</span>
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Letter Spacing */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Spacing</span>
+                          <input
+                            type="range" min={-20} max={100} step={1}
+                            value={textProps.letterSpacing}
+                            onChange={(e) => applyTextProp("letterSpacing", Number(e.target.value))}
+                            className="w-24 accent-[#c0623a] cursor-pointer"
+                          />
+                          <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.letterSpacing}</span>
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Preset Styles */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Presets</span>
+                          <PresetDropdown
+                            presets={TYPO_PRESETS}
+                            textProps={textProps}
+                            selectedLayerText={selectedLayer?.text}
+                            onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
                           />
                         </div>
                       </div>
 
-                      {/* Shadow Toggle */}
-                      <div className="w-px h-5 bg-gray-200 shrink-0" />
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Shadow</span>
-                        <button
-                          onClick={() => applyTextProp("shadow", !textProps.shadow)}
-                          className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${textProps.shadow ? "bg-[#c0623a]" : "bg-gray-300"}`}
-                        >
-                          <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${textProps.shadow ? "translate-x-4" : ""}`} />
-                        </button>
-                      </div>
+                      {/* Row 2: Outline & Shadow configurations */}
+                      <div className="border-t border-gray-100 py-2.5 px-3 flex flex-row items-center gap-3">
+                        {/* Outline Toggle */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Outline</span>
+                          <button
+                            onClick={() => applyTextProp("stroke", !textProps.stroke)}
+                            className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${textProps.stroke ? "bg-[#c0623a]" : "bg-gray-300"}`}
+                          >
+                            <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${textProps.stroke ? "translate-x-4" : ""}`} />
+                          </button>
+                        </div>
 
-                      {/* Shadow Color */}
-                      <div className="w-px h-5 bg-gray-200 shrink-0" />
-                      <div className={`flex items-center gap-1.5 shrink-0 transition-opacity ${textProps.shadow ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
-                        <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Shadow Color</span>
-                        <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
-                          <input
-                            type="color" value={textProps.shadowColor || "#000000"}
-                            onInput={(e) => applyTextProp("shadowColor", e.target.value)}
-                            className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
-                          />
+                        {/* Outline Color */}
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+                        <div className={`flex items-center gap-1.5 shrink-0 transition-opacity ${textProps.stroke ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Outline Color</span>
+                          <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                            <input
+                              type="color" value={textProps.strokeColor || "#000000"}
+                              onInput={(e) => applyTextProp("strokeColor", e.target.value)}
+                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Shadow Toggle */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Shadow</span>
+                          <button
+                            onClick={() => applyTextProp("shadow", !textProps.shadow)}
+                            className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${textProps.shadow ? "bg-[#c0623a]" : "bg-gray-300"}`}
+                          >
+                            <div className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${textProps.shadow ? "translate-x-4" : ""}`} />
+                          </button>
+                        </div>
+
+                        {/* Shadow Color */}
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+                        <div className={`flex items-center gap-1.5 shrink-0 transition-opacity ${textProps.shadow ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Shadow Color</span>
+                          <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                            <input
+                              type="color" value={textProps.shadowColor || "#000000"}
+                              onInput={(e) => applyTextProp("shadowColor", e.target.value)}
+                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
+                            />
+                          </div>
                         </div>
                       </div>
-
-                    </div>
+                    </>
                   )}
                 </div>
               )}

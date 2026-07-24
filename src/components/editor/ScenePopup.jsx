@@ -87,7 +87,6 @@ export default function ScenePopup({
   return (
     <div className={`w-full h-fit shrink-0 flex flex-col z-20 transition-all duration-300 ${isHorizontal ? 'bg-transparent border-none shadow-none p-0' : 'bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-gray-100/80 overflow-hidden'}`}>
       <div className={`flex items-center justify-between ${isHorizontal ? 'border-b-0 p-0 mb-2' : 'p-4 border-b border-gray-100'}`}>
-        <h2 className="text-xs font-bold text-gray-900 m-0">Environment</h2>
         {!isHorizontal && (
           <div className="flex items-center gap-1.5">
             {onToggleScale && (

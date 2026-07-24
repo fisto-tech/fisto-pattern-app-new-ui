@@ -5412,10 +5412,10 @@ const Canvas = forwardRef(
             </div>
             {/* Left Tool Bar */}
             <div 
-              className="absolute z-30 bg-white shadow-[0_4px_25px_rgba(0,0,0,0.15)] flex items-center border border-gray-100 transition-all duration-300 left-4 top-1/2 -translate-y-1/2 flex-col px-2.5 py-4 gap-2 rounded-3xl"
+              className="absolute z-30 bg-white shadow-[0_4px_25px_rgba(0,0,0,0.15)] flex items-center border border-gray-100 transition-all duration-300 left-4 top-1/2 -translate-y-1/2 flex-col px-1.5 py-2.5 sm:px-2.5 sm:py-4 gap-1 sm:gap-2 rounded-3xl overflow-visible"
             >
               {/* Tools */}
-              <Tooltip label="Select Tool">
+              <Tooltip label="Select Tool" position="right">
                 <button
                   onClick={() => setToolMode("cursor")}
                   className={`w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${toolMode === "cursor" ? "bg-black" : "bg-transparent hover:bg-gray-50"}`}
@@ -5427,7 +5427,7 @@ const Canvas = forwardRef(
                   />
                 </button>
               </Tooltip>
-              <Tooltip label="Pan Tool">
+              <Tooltip label="Pan Tool" position="right">
                 <button
                   onClick={() => setToolMode("hand")}
                   className={`w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${toolMode === "hand" ? "bg-black" : "bg-transparent hover:bg-gray-50"}`}
@@ -5439,7 +5439,7 @@ const Canvas = forwardRef(
                   />
                 </button>
               </Tooltip>
-              <Tooltip label="Multi-Select Mode">
+              <Tooltip label="Multi-Select Mode" position="right">
                 <button
                   onClick={() => setToolMode("multiselect")}
                   className={`w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${toolMode === "multiselect" ? "bg-black" : "bg-transparent hover:bg-gray-50"}`}
@@ -5467,7 +5467,7 @@ const Canvas = forwardRef(
               </Tooltip>
 
               <div className="relative">
-                <Tooltip label="Eraser Tool (Remove Color)">
+                <Tooltip label="Eraser Tool (Remove Color)" position="right">
                   <button
                     onClick={() => {
                       if (toolMode === "eraser" || toolMode === "eraser-pick") {
@@ -5499,7 +5499,7 @@ const Canvas = forwardRef(
                       cursor: "move",
                       userSelect: "none",
                     }}
-                    className="absolute bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 p-4 w-64 animate-in fade-in zoom-in-95 duration-200 left-full ml-4 top-1/2"
+                    className="absolute bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 p-4 w-64 animate-in fade-in zoom-in-95 duration-200 left-full ml-4 top-1/2 z-50"
                   >
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -5628,7 +5628,7 @@ const Canvas = forwardRef(
               <div className="bg-gray-200 shrink-0 w-6 h-px my-1" />
 
               {/* History */}
-              <Tooltip label="Undo">
+              <Tooltip label="Undo" position="right">
                 <button
                   onClick={undo}
                   disabled={historyIndex <= 0}
@@ -5650,7 +5650,7 @@ const Canvas = forwardRef(
                   </svg>
                 </button>
               </Tooltip>
-              <Tooltip label="Redo">
+              <Tooltip label="Redo" position="right">
                 <button
                   onClick={redo}
                   disabled={historyIndex >= history.length - 1}
@@ -5676,7 +5676,7 @@ const Canvas = forwardRef(
               <div className="bg-gray-200 shrink-0 w-6 h-px my-1" />
 
               {/* Zoom */}
-              <Tooltip label="Zoom Out">
+              <Tooltip label="Zoom Out" position="right">
                 <button
                   onClick={() => setZoom((z) => Math.max(0.5, z - 0.2))}
                   className="w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors bg-transparent text-gray-700 hover:bg-gray-50 font-bold text-xl leading-none pb-1"
@@ -5684,7 +5684,7 @@ const Canvas = forwardRef(
                   -
                 </button>
               </Tooltip>
-              <Tooltip label="Reset Zoom">
+              <Tooltip label="Reset Zoom" position="right">
                 <button
                   onClick={() => {
                     setZoom(1);
@@ -5695,7 +5695,7 @@ const Canvas = forwardRef(
                   {Math.round(zoom * 100)}%
                 </button>
               </Tooltip>
-              <Tooltip label="Zoom In">
+              <Tooltip label="Zoom In" position="right">
                 <button
                   onClick={() => setZoom((z) => Math.min(1.5, z + 0.2))}
                   className="w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors bg-transparent text-gray-700 hover:bg-gray-50 font-bold text-xl leading-none"
@@ -5706,7 +5706,7 @@ const Canvas = forwardRef(
 
               <div className="bg-gray-200 shrink-0 w-6 h-px my-1" />
 
-              <Tooltip label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+              <Tooltip label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} position="right">
                 <button
                   onClick={toggleFullscreen}
                   className={`w-11 h-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors ${
@@ -6229,9 +6229,10 @@ function Tooltip({ label, children, position = "top" }) {
   const posClasses = {
     top: "bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2",
     bottom: "top-[calc(100%+8px)] left-1/2 -translate-x-1/2",
+    right: "left-[calc(100%+12px)] top-1/2 -translate-y-1/2",
   };
   return (
-    <div className="relative group flex items-center justify-center">
+    <div className="relative group flex items-center justify-center hover:z-40">
       {children}
       <div
         className={`absolute ${posClasses[position]} px-2.5 py-1 bg-gray-900 text-white text-[11px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-[100] shadow-sm`}
@@ -6239,7 +6240,13 @@ function Tooltip({ label, children, position = "top" }) {
         {label}
         {/* Tooltip arrow */}
         <div
-          className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 border-solid border-4 border-transparent ${position === "top" ? "top-full border-t-gray-900" : "bottom-full border-b-gray-900"}`}
+          className={`absolute w-0 h-0 border-solid border-4 border-transparent ${
+            position === "top"
+              ? "top-full left-1/2 -translate-x-1/2 border-t-gray-900"
+              : position === "bottom"
+              ? "bottom-full left-1/2 -translate-x-1/2 border-b-gray-900"
+              : "right-full top-1/2 -translate-y-1/2 border-r-gray-900"
+          }`}
         ></div>
       </div>
     </div>
