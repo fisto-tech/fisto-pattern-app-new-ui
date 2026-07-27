@@ -4998,7 +4998,7 @@ export default function EditorScreen1({
       {/* Textures Popup Content */}
       <FloatingPopupWrapper
         tabId="textures"
-        isOpen={!!openTabs.textures}
+        isOpen={!!openTabs.textures && !isUvEditing}
         isScaledUp={isScaledUp}
         onClose={() => setActiveTab(null)}
         zIndex={popupZIndices.textures}

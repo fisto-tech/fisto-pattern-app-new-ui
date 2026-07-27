@@ -515,6 +515,7 @@ class DraggableImage {
 class DraggableText {
   constructor(text, textureSize, options = {}) {
     this.text = text;
+    this.textType = options.textType || "normal";
     this.fontSize = options.fontSize || 80;
     this.color = options.color || "#000000";
     this.fontFamily = options.fontFamily || "Outfit, sans-serif";
@@ -585,6 +586,7 @@ class DraggableText {
   clone(offset = 32) {
     const copy = Object.create(DraggableText.prototype);
     copy.text = this.text;
+    copy.textType = this.textType;
     copy.fontSize = this.fontSize;
     copy.color = this.color;
     copy.fontFamily = this.fontFamily;
@@ -2437,6 +2439,7 @@ const Canvas = forwardRef(
           if (item instanceof DraggableText) {
             return {
               type: "text",
+              textType: item.textType || "normal",
               text: item.text,
               x: item.x,
               y: item.y,
@@ -2507,6 +2510,7 @@ const Canvas = forwardRef(
               itemData.text,
               textureSizeRef.current,
               {
+                textType: itemData.textType,
                 fontSize: itemData.fontSize,
                 color: itemData.color,
                 fontFamily: itemData.fontFamily,
@@ -4724,8 +4728,8 @@ const Canvas = forwardRef(
       applyFitToSelectedImage: (fitType) => {
         applyFitToSelectedImageLocal(fitType);
       },
-      addText: (text = "Text") => {
-        const dt = new DraggableText(text, textureSizeRef.current);
+      addText: (text = "Text", textType = "normal") => {
+        const dt = new DraggableText(text, textureSizeRef.current, { textType });
         imagesRef.current.push(dt);
         selectedImageRef.current = dt;
         setSelectedImage(dt);

@@ -698,6 +698,30 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const originalPropsRef = useRef(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  const updateCoords = () => {
+    if (dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      window.addEventListener("resize", updateCoords);
+      window.addEventListener("scroll", updateCoords);
+    }
+    return () => {
+      window.removeEventListener("resize", updateCoords);
+      window.removeEventListener("scroll", updateCoords);
+    };
+  }, [isOpen]);
 
   const activePreset = useMemo(() => {
     return presets.find((p) => p.name === textProps.textStyleName) || presets[0];
@@ -706,6 +730,10 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        const portalDropdown = document.getElementById("portal-preset-dropdown");
+        if (portalDropdown && portalDropdown.contains(e.target)) {
+          return;
+        }
         if (isOpen && originalPropsRef.current) {
           onSelect(originalPropsRef.current);
           originalPropsRef.current = null;
@@ -786,9 +814,16 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
         </div>
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
-          className="absolute left-0 right-0 bottom-full mb-2 bg-white rounded-xl border border-gray-200 shadow-xl z-50 max-h-[300px] overflow-y-auto p-1.5 flex flex-col gap-1.5"
+          id="portal-preset-dropdown"
+          className="fixed z-[99999] bg-white rounded-xl border border-gray-200 shadow-xl p-1.5 flex flex-col gap-1.5 max-h-[300px] overflow-y-auto"
+          style={{
+            top: `${coords.top - 6}px`,
+            left: `${coords.left}px`,
+            width: `${coords.width}px`,
+            transform: "translateY(-100%)",
+          }}
           onMouseLeave={() => {
             if (originalPropsRef.current) {
               onSelect(originalPropsRef.current);
@@ -822,7 +857,8 @@ function PresetDropdown({ presets, textProps, selectedLayerText, onSelect }) {
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -1691,30 +1727,32 @@ export default function EditorScreen2({
 
               {leftTab === "text" && (
                 <div className="w-full h-full min-h-0 bg-white rounded-[15px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-y-auto flex flex-col p-6 gap-6">
-                  {/* Add Text button */}
+                  {/* Add Text buttons */}
                   <div className="w-full pb-4 border-b border-gray-100 shrink-0">
-                    <button
-                      onClick={() => {
-                        canvasRef.current?.addText("Your Text");
-                      }}
-                      className="w-full py-3 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-semibold text-sm flex items-center justify-center gap-2 border-none cursor-pointer transition-colors shadow-sm"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2.5}
-                        stroke="currentColor"
-                        className="w-4 h-4"
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => {
+                          canvasRef.current?.addText("Your Text", "normal");
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-semibold text-xs flex items-center justify-center gap-2 border-none cursor-pointer transition-colors shadow-sm"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 4.5v15m7.5-7.5h-15"
-                        />
-                      </svg>
-                      Add Text Box
-                    </button>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Add Normal Text
+                      </button>
+                      <button
+                        onClick={() => {
+                          canvasRef.current?.addText("Your Text", "typography");
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-semibold text-xs flex items-center justify-center gap-2 border-none cursor-pointer transition-colors shadow-sm"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Add Typography Text
+                      </button>
+                    </div>
                     <p className="text-[12px] text-gray-800 text-center mt-2">
                       Double-click a text layer to edit its content
                     </p>
@@ -1724,34 +1762,52 @@ export default function EditorScreen2({
                   {isTextLayer ? (
                     <div className="flex flex-col gap-4">
                       {/* Typography Style Presets Custom Dropdown */}
-                      <div className="border-b border-gray-100 pb-4">
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-2.5 uppercase tracking-wide">
-                          Typography Style Presets
-                        </label>
-                        <PresetDropdown
-                          presets={TYPO_PRESETS}
-                          textProps={textProps}
-                          selectedLayerText={selectedLayer?.text}
-                          onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
-                        />
-                      </div>
+                      {selectedLayer?.textType === "typography" && (
+                        <div className="border-b border-gray-100 pb-4">
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-2.5 uppercase tracking-wide">
+                            Typography Style Presets
+                          </label>
+                          <PresetDropdown
+                            presets={TYPO_PRESETS}
+                            textProps={textProps}
+                            selectedLayerText={selectedLayer?.text}
+                            onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
+                          />
+                        </div>
+                      )}
 
-                      {/* Font Family */}
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                          Font
-                        </label>
-                        <FontSelect
-                          value={textProps.fontFamily}
-                          onChange={(val) => applyTextProp("fontFamily", val)}
-                        />
-                      </div>
+                      {/* Font Family (Only for normal text) */}
+                      {(!selectedLayer || selectedLayer.textType !== "typography") && (
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                            Font
+                          </label>
+                          <FontSelect
+                            value={textProps.fontFamily}
+                            onChange={(val) => applyTextProp("fontFamily", val)}
+                          />
+                        </div>
+                      ) }
 
                       {/* Font Size */}
                       <div>
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                          Size — {textProps.fontSize}px
-                        </label>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                            Size
+                          </label>
+                          <input
+                            type="number" min={20} max={300}
+                            value={textProps.fontSize || ""}
+                            onChange={(e) => {
+                              applyTextProp("fontSize", Number(e.target.value));
+                            }}
+                            onBlur={(e) => {
+                              const val = Math.max(20, Math.min(300, Number(e.target.value) || 20));
+                              applyTextProp("fontSize", val);
+                            }}
+                            className="w-12 px-1.5 py-0.5 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 bg-gray-50 focus:outline-none focus:border-[#c0623a] text-center"
+                          />
+                        </div>
                         <input
                           type="range"
                           min={20}
@@ -1769,38 +1825,40 @@ export default function EditorScreen2({
                         </div>
                       </div>
 
-                      {/* Bold / Italic / Underline */}
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                          Style
-                        </label>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => applyTextProp("bold", !textProps.bold)}
-                            className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold border-none cursor-pointer transition-all ${textProps.bold ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          >
-                            B
-                          </button>
-                          <button
-                            onClick={() =>
-                              applyTextProp("italic", !textProps.italic)
-                            }
-                            className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm border-none cursor-pointer transition-all ${textProps.italic ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          >
-                            <span className="font-serif italic font-bold leading-none text-base">
-                              I
-                            </span>
-                          </button>
-                          <button
-                            onClick={() =>
-                              applyTextProp("underline", !textProps.underline)
-                            }
-                            className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold underline border-none cursor-pointer transition-all ${textProps.underline ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                          >
-                            U
-                          </button>
+                      {/* Bold / Italic / Underline (Only for normal text) */}
+                      {(!selectedLayer || selectedLayer.textType !== "typography") && (
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+                            Style
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => applyTextProp("bold", !textProps.bold)}
+                              className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold border-none cursor-pointer transition-all ${textProps.bold ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                            >
+                              B
+                            </button>
+                            <button
+                              onClick={() =>
+                                applyTextProp("italic", !textProps.italic)
+                              }
+                              className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm border-none cursor-pointer transition-all ${textProps.italic ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                            >
+                              <span className="font-serif italic font-bold leading-none text-base">
+                                I
+                              </span>
+                            </button>
+                            <button
+                              onClick={() =>
+                                applyTextProp("underline", !textProps.underline)
+                              }
+                              className={`flex-1 flex items-center justify-center py-2 rounded-xl text-sm font-bold underline border-none cursor-pointer transition-all ${textProps.underline ? "bg-[#c0623a] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                            >
+                              U
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Color */}
                       <div>
@@ -1861,8 +1919,9 @@ export default function EditorScreen2({
                       </div>
                     </div>
 
-                    {/* Collapsible Advanced Settings (Curve, Spacing, Alignments, Effects) */}
-                    <div className="border-t border-gray-100 pt-3">
+                    {/* Collapsible Advanced Settings (Curve, Spacing, Alignments, Effects) - Only for typography text */}
+                    {selectedLayer?.textType === "typography" && (
+                      <div className="border-t border-gray-100 pt-3">
                       <button
                         onClick={() => setShowAdvancedText(!showAdvancedText)}
                         className="w-full flex items-center justify-between py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wide border-none bg-transparent cursor-pointer hover:text-gray-800 transition-colors"
@@ -1882,9 +1941,23 @@ export default function EditorScreen2({
                         <div className="flex flex-col gap-4 mt-3 pb-2 transition-all">
                           {/* Blend (Arch) */}
                           <div>
-                            <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                              Blend (Arch) — {textProps.bend}
-                            </label>
+                            <div className="flex justify-between items-center mb-1.5">
+                              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                                Blend (Arch)
+                              </label>
+                              <input
+                                type="number" min={-100} max={100}
+                                value={textProps.bend}
+                                onChange={(e) => {
+                                  applyTextProp("bend", Number(e.target.value));
+                                }}
+                                onBlur={(e) => {
+                                  const val = Math.max(-100, Math.min(100, Number(e.target.value) || 0));
+                                  applyTextProp("bend", val);
+                                }}
+                                className="w-12 px-1.5 py-0.5 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 bg-gray-50 focus:outline-none focus:border-[#c0623a] text-center"
+                              />
+                            </div>
                             <input
                               type="range"
                               min={-100}
@@ -1905,9 +1978,23 @@ export default function EditorScreen2({
 
                           {/* Letter Spacing */}
                           <div>
-                            <label className="block text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                              Letter Spacing — {textProps.letterSpacing}
-                            </label>
+                            <div className="flex justify-between items-center mb-1.5">
+                              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                                Letter Spacing
+                              </label>
+                              <input
+                                type="number" min={-20} max={100}
+                                value={textProps.letterSpacing}
+                                onChange={(e) => {
+                                  applyTextProp("letterSpacing", Number(e.target.value));
+                                }}
+                                onBlur={(e) => {
+                                  const val = Math.max(-20, Math.min(100, Number(e.target.value) || 0));
+                                  applyTextProp("letterSpacing", val);
+                                }}
+                                className="w-12 px-1.5 py-0.5 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 bg-gray-50 focus:outline-none focus:border-[#c0623a] text-center"
+                              />
+                            </div>
                             <input
                               type="range"
                               min={-20}
@@ -2079,6 +2166,7 @@ export default function EditorScreen2({
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 ) : (
                   <div className="w-full">
@@ -2155,16 +2243,16 @@ export default function EditorScreen2({
 
                     {/* Fit controls */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-xs font-semibold text-gray-800 uppercase whitespace-nowrap">Fit</span>
-                      <div className="flex gap-1">
+                      <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Fit Mode:</span>
+                      <div className="flex gap-1 bg-gray-200/50 p-0.5 rounded-xl border border-gray-200">
                         {[["contain", "Contain"], ["cover", "Cover"], ["texture", "Tile"]].map(([val, label]) => (
                           <button
                             key={val}
                             onClick={() => canvasRef.current?.applyFitToSelectedImage(val)}
-                            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-none cursor-pointer transition-all ${
+                            className={`px-3 py-1 rounded-lg text-xs font-bold border-none cursor-pointer transition-all ${
                               selectedLayer?.fitType === val
-                                ? "bg-[#c0623a] text-white shadow-sm"
-                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "bg-transparent text-gray-600 hover:text-gray-900"
                             }`}
                           >
                             {label}
@@ -2255,23 +2343,52 @@ export default function EditorScreen2({
 
               {/* ── TEXT: slim horizontal toolbar + expandable second row ── */}
               {activeTab === "text" && (
-                <div className={`fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto transition-all duration-300 flex flex-col ${isTextLayer ? "w-max" : "w-fit w-max"}`}>
+                <div className="fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto transition-all duration-300 flex flex-col w-max">
 
                   {/* Primary row */}
                   <div className="py-2.5 px-3 flex flex-row items-center gap-2.5 sm:gap-3 overflow-x-auto no-scrollbar">
-                    {/* Add Text */}
-                    <button
-                      onClick={() => canvasRef.current?.addText("Your Text")}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-bold text-xs border-none cursor-pointer transition-colors shadow-sm shrink-0"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      Add Text
-                    </button>
-
-                    {isTextLayer && (
+                    
+                    {!isTextLayer && (
                       <>
+                        {/* Add Normal Text */}
+                        <button
+                          onClick={() => canvasRef.current?.addText("Your Text", "normal")}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-bold text-xs border-none cursor-pointer transition-colors shadow-sm shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Normal Text
+                        </button>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Add Typography Text */}
+                        <button
+                          onClick={() => canvasRef.current?.addText("Your Text", "typography")}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-bold text-xs border-none cursor-pointer transition-colors shadow-sm shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Typography Text
+                        </button>
+                      </>
+                    )}
+
+                    {isTextLayer && (selectedLayer?.textType || "normal") === "normal" && (
+                      <>
+                        {/* Add Normal Text */}
+                        <button
+                          onClick={() => canvasRef.current?.addText("Your Text", "normal")}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-bold text-xs border-none cursor-pointer transition-colors shadow-sm shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Normal Text
+                        </button>
+
                         <div className="w-px h-5 bg-gray-200 shrink-0" />
 
                         {/* Font */}
@@ -2293,9 +2410,18 @@ export default function EditorScreen2({
                             onChange={(e) => applyTextProp("fontSize", Number(e.target.value))}
                             className="w-20 accent-[#c0623a] cursor-pointer"
                           />
-                          <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0">
-                            {typeof textProps.fontSize === "number" ? textProps.fontSize.toFixed(1) : textProps.fontSize}
-                          </span>
+                          <input
+                            type="number" min={20} max={300}
+                            value={textProps.fontSize || ""}
+                            onChange={(e) => {
+                              applyTextProp("fontSize", Number(e.target.value));
+                            }}
+                            onBlur={(e) => {
+                              const val = Math.max(20, Math.min(300, Number(e.target.value) || 20));
+                              applyTextProp("fontSize", val);
+                            }}
+                            className="w-12 px-1.5 py-0.5 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 bg-gray-50 focus:outline-none focus:border-[#c0623a] text-center"
+                          />
                         </div>
 
                         <div className="w-px h-5 bg-gray-200 shrink-0" />
@@ -2339,51 +2465,78 @@ export default function EditorScreen2({
                             </button>
                           </div>
                         </div>
-
-                        {/* More / Less toggle */}
-                        <button
-                          onClick={() => setTextExpanded((v) => !v)}
-                          title="More options"
-                          className={`flex items-center gap-1 px-2 py-1.5 rounded-xl border-none cursor-pointer text-[10px] font-bold transition-all shrink-0 ml-auto ${textExpanded ? "bg-[#c0623a] text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
-                        >
-                          {textExpanded ? "Less" : "More"}
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-3.5 h-3.5 transition-transform ${textExpanded ? "rotate-180" : ""}`}>
-                            <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd"/>
-                          </svg>
-                        </button>
                       </>
                     )}
-                  </div>
 
-                  {/* Expanded advanced controls (Row 1 & Row 2 stacked) */}
-                  {isTextLayer && textExpanded && (
-                    <>
-                      {/* Row 1: Arch, Spacing, Presets */}
-                      <div className="border-t border-gray-100 py-2.5 px-3 flex flex-row items-center gap-3">
-                        {/* Arch / Bend */}
+                    {isTextLayer && selectedLayer?.textType === "typography" && (
+                      <>
+                        {/* Add Typography Text */}
+                        <button
+                          onClick={() => canvasRef.current?.addText("Your Text", "typography")}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c0623a] hover:bg-[#a65330] text-white font-bold text-xs border-none cursor-pointer transition-colors shadow-sm shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Add Typography Text
+                        </button>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Size */}
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Arch</span>
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Size</span>
                           <input
-                            type="range" min={-100} max={100} step={1}
-                            value={textProps.bend}
-                            onChange={(e) => applyTextProp("bend", Number(e.target.value))}
-                            className="w-24 accent-[#c0623a] cursor-pointer"
+                            type="range" min={20} max={300} step={2}
+                            value={textProps.fontSize}
+                            onChange={(e) => applyTextProp("fontSize", Number(e.target.value))}
+                            className="w-20 accent-[#c0623a] cursor-pointer"
                           />
-                          <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.bend}</span>
+                          <input
+                            type="number" min={20} max={300}
+                            value={textProps.fontSize || ""}
+                            onChange={(e) => {
+                              applyTextProp("fontSize", Number(e.target.value));
+                            }}
+                            onBlur={(e) => {
+                              const val = Math.max(20, Math.min(300, Number(e.target.value) || 20));
+                              applyTextProp("fontSize", val);
+                            }}
+                            className="w-12 px-1.5 py-0.5 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 bg-gray-50 focus:outline-none focus:border-[#c0623a] text-center"
+                          />
                         </div>
 
                         <div className="w-px h-5 bg-gray-200 shrink-0" />
 
-                        {/* Letter Spacing */}
+                        {/* Color */}
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Spacing</span>
-                          <input
-                            type="range" min={-20} max={100} step={1}
-                            value={textProps.letterSpacing}
-                            onChange={(e) => applyTextProp("letterSpacing", Number(e.target.value))}
-                            className="w-24 accent-[#c0623a] cursor-pointer"
-                          />
-                          <span className="text-[10px] font-mono text-gray-600 w-7 shrink-0 text-right">{textProps.letterSpacing}</span>
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Color</span>
+                          <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                            <input
+                              type="color" value={textProps.color}
+                              onInput={(e) => applyTextProp("color", e.target.value)}
+                              className="absolute -inset-2 w-[200%] h-[200%] p-0 border-none cursor-pointer"
+                            />
+                          </div>
+                          <span className="text-[10px] font-mono text-gray-500 uppercase">{textProps.color}</span>
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Align */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Align</span>
+                          <div className="flex gap-0.5">
+                            <button onClick={() => canvasRef.current?.alignSelectedLayer("left", null)} title="Left" className="w-7 h-7 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" d="M3 6h18M3 10h12M3 14h18M3 18h12"/></svg>
+                            </button>
+                            <button onClick={() => canvasRef.current?.alignSelectedLayer("center", null)} title="Center" className="w-7 h-7 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" d="M3 6h18M6 10h12M3 14h18M6 18h12"/></svg>
+                            </button>
+                            <button onClick={() => canvasRef.current?.alignSelectedLayer("right", null)} title="Right" className="w-7 h-7 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 border-none cursor-pointer flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5"><path strokeLinecap="round" d="M3 6h18M9 10h12M3 14h18M9 18h12"/></svg>
+                            </button>
+                          </div>
                         </div>
 
                         <div className="w-px h-5 bg-gray-200 shrink-0" />
@@ -2398,10 +2551,65 @@ export default function EditorScreen2({
                             onSelect={(presetProps) => applyTextPropsMulti(presetProps)}
                           />
                         </div>
-                      </div>
+                      </>
+                    )}
+                  </div>
 
-                      {/* Row 2: Outline & Shadow configurations */}
+                  {/* Expanded advanced controls for Typography Text */}
+                  {isTextLayer && selectedLayer?.textType === "typography" && (
+                    <>
+                      {/* Row 2: Arch, Spacing */}
                       <div className="border-t border-gray-100 py-2.5 px-3 flex flex-row items-center gap-3">
+                        {/* Arch / Bend */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Arch</span>
+                          <input
+                            type="range" min={-100} max={100} step={1}
+                            value={textProps.bend}
+                            onChange={(e) => applyTextProp("bend", Number(e.target.value))}
+                            className="w-24 accent-[#c0623a] cursor-pointer"
+                          />
+                          <input
+                            type="number" min={-100} max={100}
+                            value={textProps.bend}
+                            onChange={(e) => {
+                              applyTextProp("bend", Number(e.target.value));
+                            }}
+                            onBlur={(e) => {
+                              const val = Math.max(-100, Math.min(100, Number(e.target.value) || 0));
+                              applyTextProp("bend", val);
+                            }}
+                            className="w-12 px-1.5 py-0.5 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 bg-gray-50 focus:outline-none focus:border-[#c0623a] text-center"
+                          />
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
+                        {/* Letter Spacing */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Spacing</span>
+                          <input
+                            type="range" min={-20} max={100} step={1}
+                            value={textProps.letterSpacing}
+                            onChange={(e) => applyTextProp("letterSpacing", Number(e.target.value))}
+                            className="w-24 accent-[#c0623a] cursor-pointer"
+                          />
+                          <input
+                            type="number" min={-20} max={100}
+                            value={textProps.letterSpacing}
+                            onChange={(e) => {
+                              applyTextProp("letterSpacing", Number(e.target.value));
+                            }}
+                            onBlur={(e) => {
+                              const val = Math.max(-20, Math.min(100, Number(e.target.value) || 0));
+                              applyTextProp("letterSpacing", val);
+                            }}
+                            className="w-12 px-1.5 py-0.5 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 bg-gray-50 focus:outline-none focus:border-[#c0623a] text-center"
+                          />
+                        </div>
+
+                        <div className="w-px h-5 bg-gray-200 shrink-0" />
+
                         {/* Outline Toggle */}
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className="text-[10px] font-semibold text-gray-800 uppercase whitespace-nowrap">Outline</span>

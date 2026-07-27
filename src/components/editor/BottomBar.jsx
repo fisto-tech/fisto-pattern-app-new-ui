@@ -147,7 +147,7 @@ export default function BottomBar({
 }) {
   const visibleItems = React.useMemo(() => {
     if (isUvEditing) {
-      const items = [...bottomNavItems];
+      const items = bottomNavItems.filter((item) => item.id !== "textures");
       const uvIndex = items.findIndex((item) => item.id === "uv_editor");
       if (uvIndex !== -1) {
         items.splice(
@@ -211,21 +211,6 @@ export default function BottomBar({
             </button>
           );
         })}
-      </div>
-
-      <div className="w-[1px] h-6 bg-gray-200/80 mx-1 shrink-0" />
-
-      {/* Multi-Window Mode Toggle */}
-      <div className="flex items-center gap-2 px-2 shrink-0 select-none">
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Multi-Tab</span>
-        <button
-          onClick={() => setMultiWindow?.(!multiWindow)}
-          className={`w-9 h-5 flex shrink-0 items-center rounded-full p-0.5 cursor-pointer transition-colors border-none ${multiWindow ? "bg-[#C15F27]" : "bg-gray-300"}`}
-        >
-          <div
-            className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-200 ${multiWindow ? "translate-x-4" : ""}`}
-          />
-        </button>
       </div>
     </div>
   );
