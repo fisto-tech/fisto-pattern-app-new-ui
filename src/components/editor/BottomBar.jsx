@@ -1,6 +1,6 @@
 import React from "react";
 
-const bottomNavItems = [
+const baseDefaultNavItems = [
   {
     id: "layout",
     label: "Layouts",
@@ -72,27 +72,6 @@ const bottomNavItems = [
     ),
   },
   {
-    id: "uv_editor",
-    label: "UV Editor",
-    badge: "LIVE",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.8}
-        stroke="currentColor"
-        className="w-5 h-5"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M3.75 3.75v16.5h16.5V3.75H3.75Zm4.5 4.5h7.5v7.5h-7.5v-7.5Z"
-        />
-      </svg>
-    ),
-  },
-  {
     id: "scene",
     label: "Scene",
     icon: (
@@ -145,73 +124,132 @@ export default function BottomBar({
   openTabs = {},
   isUvEditing = false,
 }) {
-  const visibleItems = React.useMemo(() => {
+  const defaultItems = React.useMemo(() => {
     if (isUvEditing) {
-      const items = bottomNavItems.filter((item) => item.id !== "textures");
-      const uvIndex = items.findIndex((item) => item.id === "uv_editor");
-      if (uvIndex !== -1) {
-        items.splice(
-          uvIndex,
-          0,
-          {
-            id: "uploads",
-            label: "Uploads",
-            icon: (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
-            ),
-          },
-          {
-            id: "text",
-            label: "Text",
-            icon: (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.43 5.43h3.14M12 5.43v13.14M9.25 18.57h5.5" />
-              </svg>
-            ),
-          }
-        );
-      }
-      return items;
+      return baseDefaultNavItems.filter((item) => item.id !== "textures");
     }
-    return bottomNavItems;
+    return baseDefaultNavItems;
   }, [isUvEditing]);
+
+  const uvEditorItems = React.useMemo(() => {
+    const items = [];
+    if (isUvEditing) {
+      items.push(
+        {
+          id: "uploads",
+          label: "Uploads",
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+          ),
+        },
+        {
+          id: "text",
+          label: "Text",
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.43 5.43h3.14M12 5.43v13.14M9.25 18.57h5.5" />
+            </svg>
+          ),
+        }
+      );
+    }
+    items.push({
+      id: "uv_editor",
+      label: "UV Editor",
+      badge: "LIVE",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.8}
+          stroke="currentColor"
+          className="w-5 h-5"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3.75 3.75v16.5h16.5V3.75H3.75Zm4.5 4.5h7.5v7.5h-7.5v-7.5Z"
+          />
+        </svg>
+      ),
+    });
+    return items;
+  }, [isUvEditing]);
+
   return (
-    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 max-w-[95vw] w-max overflow-x-auto p-1.5 rounded-2xl bg-white/90 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)] no-scrollbar">
-      <div className="flex items-center gap-1 shrink-0">
-        {visibleItems.map((item) => {
-          const isActive = multiWindow ? !!openTabs[item.id] : activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(isActive ? null : item.id)}
-              className={`
-                relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border-none
-                ${
-                  isActive
-                    ? "bg-[#C15F27] text-white shadow-md shadow-orange-500/20 scale-[1.03]"
-                    : "bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100/70"
-                }
-              `}
-            >
-              {item.icon}
-              <span className="whitespace-nowrap">{item.label}</span>
-              {item.badge && (
-                <span
-                  className={`text-[9px] px-1.5 py-0.2 rounded-full font-black tracking-widest uppercase ${
+    <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3.5 max-w-[95vw] w-max p-2 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200/80 shadow-[0_16px_40px_rgba(0,0,0,0.12)] no-scrollbar">
+      
+      {/* Default Group */}
+      <div className="flex flex-col gap-1 items-center">
+        <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest select-none">Default</span>
+        <div className="flex items-center gap-1 bg-gray-100/70 p-1 rounded-xl">
+          {defaultItems.map((item) => {
+            const isActive = multiWindow ? !!openTabs[item.id] : activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(isActive ? null : item.id)}
+                className={`
+                  relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border-none
+                  ${
                     isActive
-                      ? "bg-white/20 text-white"
-                      : "bg-orange-100 text-[#C15F27]"
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+                      ? "bg-[#C15F27] text-white shadow-md shadow-orange-500/20 scale-[1.02]"
+                      : "bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-250"
+                  }
+                `}
+              >
+                {item.icon}
+                <span className="whitespace-nowrap">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Divider */}
+      <div className="w-px h-10 bg-gray-200 shrink-0 self-end mb-1" />
+
+      {/* UV Editor Group */}
+      <div className="flex flex-col gap-1 items-center">
+        <span className="text-[9px] font-black text-orange-500/80 uppercase tracking-widest select-none">UV Editor</span>
+        <div className="flex items-center gap-1 bg-orange-100/30 p-1 rounded-xl">
+          {uvEditorItems.map((item) => {
+            const isActive = multiWindow ? !!openTabs[item.id] : activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(isActive ? null : item.id)}
+                className={`
+                  relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border-none
+                  ${
+                    isActive
+                      ? "bg-[#C15F27] text-white shadow-md shadow-orange-500/20 scale-[1.02]"
+                      : "bg-transparent text-gray-600 hover:text-gray-900 hover:bg-orange-100/50"
+                  }
+                `}
+              >
+                {item.icon}
+                <span className="whitespace-nowrap">{item.label}</span>
+                {item.badge && (
+                  <span
+                    className={`text-[9px] px-1.5 py-0.2 rounded-full font-black tracking-widest uppercase ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-orange-100 text-[#C15F27]"
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
     </div>
   );
 }

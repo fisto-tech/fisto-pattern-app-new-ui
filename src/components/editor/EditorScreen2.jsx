@@ -2201,7 +2201,7 @@ export default function EditorScreen2({
             <>
               {/* ── UPLOADS: slim horizontal toolbar ── */}
               {activeTab === "uploads" && (
-                <div className="fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto overflow-hidden w-fit max-w-[96vw] w-max">
+                <div className="fixed bottom-[86px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto overflow-hidden w-fit max-w-[96vw] w-max">
 
                   {/* ── Primary row ── */}
                   <div className="py-2.5 px-3 flex flex-row items-center gap-3 overflow-x-auto no-scrollbar">
@@ -2343,7 +2343,7 @@ export default function EditorScreen2({
 
               {/* ── TEXT: slim horizontal toolbar + expandable second row ── */}
               {activeTab === "text" && (
-                <div className="fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto transition-all duration-300 flex flex-col w-max">
+                <div className="fixed bottom-[86px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 pointer-events-auto transition-all duration-300 flex flex-col w-max">
 
                   {/* Primary row */}
                   <div className="py-2.5 px-3 flex flex-row items-center gap-2.5 sm:gap-3 overflow-x-auto no-scrollbar">

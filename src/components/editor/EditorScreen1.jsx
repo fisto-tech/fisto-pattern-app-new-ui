@@ -157,7 +157,7 @@ function FloatingPopupWrapper({
     return (
       <div
         onPointerDown={onFocus}
-        className={`fixed bottom-[62px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 flex flex-col pointer-events-auto transition-all duration-300 ${widthClass} overflow-hidden`}
+        className={`fixed bottom-[86px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200/80 flex flex-col pointer-events-auto transition-all duration-300 ${widthClass} overflow-hidden`}
         style={{ zIndex }}
       >
         <div className="flex-1 py-1 px-4.5 flex flex-col gap-3 min-h-0 select-text overflow-x-auto overflow-y-hidden no-scrollbar">
